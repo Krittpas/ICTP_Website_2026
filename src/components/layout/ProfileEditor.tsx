@@ -94,8 +94,9 @@ export function ProfileEditor({ user, open, onClose }: { user: SessionUser; open
     }
   }
 
+  // รูปที่เพิ่งเลือก (blob) มาก่อน · ไม่มีก็ใช้ลิงก์ชั่วคราวของรูปเดิม · เลือก "เอารูปออก" = ไม่แสดงอะไร
   const previewSrc = choice.kind === 'new' ? choice.preview : undefined
-  const previewPath = choice.kind === 'keep' ? user.avatarUrl : null
+  const previewPath = choice.kind === 'keep' ? user.avatarSrc : null
   const hasImage = choice.kind === 'new' || (choice.kind === 'keep' && Boolean(user.avatarUrl))
 
   return (
@@ -115,7 +116,7 @@ export function ProfileEditor({ user, open, onClose }: { user: SessionUser; open
         <h2 id="profile-title" className="confirm-title" style={{ marginTop: 0 }}>แก้ไขโปรไฟล์</h2>
 
         <div className="profile-avatar-edit">
-          <Avatar path={previewPath} src={previewSrc} name={user.nickname || user.displayName || user.email} size={112} />
+          <Avatar src={previewSrc ?? previewPath} name={user.nickname || user.displayName || user.email} size={112} />
           <button type="button" className="profile-avatar-btn" onClick={() => input.current?.click()}
                   disabled={busyPicking || pending} aria-label="เปลี่ยนรูปโปรไฟล์">
             <Camera size={17} aria-hidden="true" />

@@ -7,7 +7,10 @@ export interface SessionUser {
   email: string
   displayName: string
   nickname: string
+  /** path ของไฟล์ใน Storage — ใช้ตอนลบรูปเก่า ไม่ใช่ลิงก์ที่เปิดได้ */
   avatarUrl: string | null
+  /** ลิงก์ชั่วคราวไว้แสดงรูป — ที่เก็บเป็นแบบส่วนตัวตั้งแต่ migration 018 */
+  avatarSrc: string | null
   role: UserRole
   cityId: number | null
   seatIndex: number | null

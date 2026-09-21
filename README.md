@@ -44,7 +44,7 @@ src/
 ├ lib/                     supabase · auth (DAL) · camp state
 └ types/app.ts
 public/                    hero-banner.svg (ย่อจาก "ICTP banner 2026.svg" โดยแปลงรูปข้างในเป็น WebP) · logo-ictp.webp · gallery/
-supabase/migrations/       001 → 017
+supabase/migrations/       001 → 018
 ```
 
 ## หลักความปลอดภัย 5 ข้อ

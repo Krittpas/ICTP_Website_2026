@@ -55,7 +55,7 @@ function ProfileMenu({ user }: { user: SessionUser }) {
       {open && (
         <div id="profile-pop" className="nav-pop">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Avatar path={user.avatarUrl} name={name} size={48} />
+            <Avatar src={user.avatarSrc} name={name} size={48} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {name}

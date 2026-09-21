@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { AVATAR_BUCKET, AVATAR_URL_TTL } from '@/lib/profile/avatar'
 import type { SessionUser, UserRole } from '@/types/app'
 
 /**
@@ -19,12 +20,22 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
     .eq('id', user.id)
     .single()
 
+  // ที่เก็บรูปโปรไฟล์เป็นแบบส่วนตัว (migration 018) จึงต้องขอลิงก์ชั่วคราวทุกครั้ง
+  // ขอด้วยสิทธิ์ของเจ้าตัวเอง — policy ยอมออกลิงก์ให้เฉพาะไฟล์ในโฟลเดอร์ของตัวเองเท่านั้น
+  const path = profile?.avatar_url ?? null
+  let avatarSrc: string | null = null
+  if (path) {
+    const { data } = await supabase.storage.from(AVATAR_BUCKET).createSignedUrl(path, AVATAR_URL_TTL)
+    avatarSrc = data?.signedUrl ?? null
+  }
+
   return {
     id: user.id,
     email: user.email ?? '',
     displayName: profile?.display_name ?? '',
     nickname: profile?.nickname ?? '',
-    avatarUrl: profile?.avatar_url ?? null,
+    avatarUrl: path,
+    avatarSrc,
     role: (profile?.role ?? 'student') as UserRole,
     cityId: profile?.city_id ?? null,
     seatIndex: profile?.seat_index ?? null,

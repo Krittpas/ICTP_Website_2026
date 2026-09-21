@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { headers } from 'next/headers'
 import { Athiti, Rye, Share_Tech_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { ConfirmProvider } from '@/components/layout/ConfirmDialog'
@@ -37,11 +38,17 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+/**
+ * nonce ของคำขอนี้มาจาก middleware — next-themes ฝัง <script> กันจอกะพริบตอนโหลด
+ * ถ้าไม่ส่ง nonce ให้ สคริปต์นั้นจะโดน CSP บล็อก แล้วธีมจะสลับให้เห็นตอนเปิดหน้า
+ */
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined
+
   return (
     <html lang="th" suppressHydrationWarning className={`${athiti.variable} ${tech.variable} ${western.variable}`}>
       <body>
-        <ThemeProvider>
+        <ThemeProvider nonce={nonce}>
           <ConfirmProvider>{children}</ConfirmProvider>
           <Toaster position="top-center" richColors />
         </ThemeProvider>
