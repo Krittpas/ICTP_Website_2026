@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Check, Lock, Maximize2, TriangleAlert } from 'lucide-react'
+import { useRef, useState, useTransition } from 'react'
+import { Check, Copy, Lock, Maximize2, TriangleAlert } from 'lucide-react'
 import { submitAnswerAction } from '@/actions/puzzle'
 import type { AnswerResult, MyPuzzle } from '@/types/app'
 
@@ -28,6 +28,47 @@ function PuzzleImage({ url, title }: { url: string; title: string }) {
       <img src={src} alt={`รูปโจทย์: ${title}`} />
       <span className="puzzle-image-zoom" aria-hidden="true"><Maximize2 size={14} /> ขยาย</span>
     </a>
+  )
+}
+
+/**
+ * รหัสลับประจำตัว
+ *
+ * 18 อักขระ มีทั้งพิมพ์ใหญ่ พิมพ์เล็ก ตัวเลข และอักขระพิเศษ — พิมพ์ตามจากหน้าจอบนมือถือพลาดง่ายมาก
+ * จึงต้องมีปุ่มคัดลอกเสมอ ถ้าเบราว์เซอร์คัดลอกให้ไม่ได้ (ไม่ใช่ https) จะเลือกข้อความให้แทน
+ * น้องกดค้างแล้วสั่งคัดลอกเองได้
+ */
+function SecretCode({ code, note }: { code: string; note?: React.ReactNode }) {
+  const [copied, setCopied] = useState(false)
+  const value = useRef<HTMLDivElement>(null)
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+    } catch {
+      setCopied(false)
+      const node = value.current
+      if (!node) return
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      const selection = window.getSelection()
+      selection?.removeAllRanges()
+      selection?.addRange(range)
+    }
+  }
+
+  return (
+    <div className="code-box">
+      <div className="stamp code-box-label">รหัสลับของคุณ</div>
+      <div ref={value} className="code-box-value">{code}</div>
+      <button type="button" className="btn-brass code-box-copy" onClick={copy}>
+        {copied
+          ? <><Check size={15} aria-hidden="true" /> คัดลอกแล้ว</>
+          : <><Copy size={15} aria-hidden="true" /> คัดลอกรหัส</>}
+      </button>
+      {note && <p className="code-box-note">{note}</p>}
+    </div>
   )
 }
 
@@ -95,20 +136,10 @@ export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle
         </h2>
         <p style={{ margin: '0 0 1.2rem', fontSize: '0.88rem', color: 'var(--muted)' }}>{puzzle.title}</p>
 
-        <div style={{
-          padding: '1.2rem 1rem', borderRadius: 3,
-          background: 'var(--plank-2)', border: '1px solid var(--neon)',
-        }}>
-          <div className="stamp" style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 8 }}>
-            รหัสลับของคุณ
-          </div>
-          <div style={{ fontFamily: 'var(--tech)', fontSize: '1.7rem', letterSpacing: '0.12em', color: 'var(--neon)', wordBreak: 'break-all' }}>
-            {puzzle.secret_code}
-          </div>
-          <p style={{ margin: '0.8rem 0 0', fontSize: '0.76rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-            จดไว้ให้ดี ใช้กับเครื่องถอดรหัสที่สำนักงานนายอำเภอ<br />เปิดดูซ้ำได้ตลอดจากหน้านี้
-          </p>
-        </div>
+        <SecretCode
+          code={puzzle.secret_code}
+          note={<>ใช้กับเครื่องถอดรหัสที่สำนักงานนายอำเภอ<br />เปิดดูซ้ำได้ตลอดจากหน้านี้ ไม่ต้องจด</>}
+        />
       </div>
     )
   }
@@ -131,12 +162,10 @@ export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle
         <h2 style={{ fontFamily: 'var(--display)', fontSize: '1.3rem', color: 'var(--neon)', margin: '0.6rem 0 1rem' }}>
           ถูกต้อง
         </h2>
-        <div style={{ padding: '1.2rem 1rem', borderRadius: 3, background: 'var(--plank-2)', border: '1px solid var(--neon)' }}>
-          <div className="stamp" style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 8 }}>รหัสลับของคุณ</div>
-          <div style={{ fontFamily: 'var(--tech)', fontSize: '1.7rem', letterSpacing: '0.12em', color: 'var(--neon)', wordBreak: 'break-all' }}>
-            {shown.secret_code}
-          </div>
-        </div>
+        <SecretCode
+          code={shown.secret_code ?? ''}
+          note={<>ใช้กับเครื่องถอดรหัสที่สำนักงานนายอำเภอ<br />เปิดดูซ้ำได้ตลอดจากหน้านี้ ไม่ต้องจด</>}
+        />
       </div>
     )
   }

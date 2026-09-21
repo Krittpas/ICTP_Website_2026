@@ -1,8 +1,8 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState, useTransition } from 'react'
-import { Check, Copy, Dices, ImagePlus, Trash2, TriangleAlert } from 'lucide-react'
-import { getPuzzleForEditAction, regenerateSecretCodesAction, upsertPuzzleAction } from '@/actions/admin'
+import { Check, Copy, Dices, DoorClosed, DoorOpen, ImagePlus, Trash2, TriangleAlert } from 'lucide-react'
+import { getPuzzleForEditAction, regenerateSecretCodesAction, setSeatActiveAction, upsertPuzzleAction } from '@/actions/admin'
 import type { PuzzleForEdit } from '@/lib/puzzles/edit'
 import { createClient } from '@/lib/supabase/client'
 import { formatBytes, storageKeyFor } from '@/lib/storage'
@@ -42,6 +42,8 @@ export function PuzzleEditor({ cities }: { cities: City[] }) {
   const [copied, setCopied] = useState(false)
   const [bulkMsg, setBulkMsg] = useState<{ text: string; bad?: boolean } | null>(null)
   const [bulkPending, startBulk] = useTransition()
+  const [seatMsg, setSeatMsg] = useState<{ text: string; bad?: boolean } | null>(null)
+  const [seatPending, startSeat] = useTransition()
   const input = useRef<HTMLInputElement>(null)
   const confirm = useConfirm()
 
@@ -61,6 +63,9 @@ export function PuzzleEditor({ cities }: { cities: City[] }) {
     })
     return () => { current = false }
   }, [cityId, seat, reloadKey])
+
+  // ผลการปิด/เปิดที่นั่งเป็นของที่นั่งนั้น ย้ายที่นั่งเมื่อไหร่ก็ทิ้ง (แต่ไม่ทิ้งตอนโหลดซ้ำหลังเพิ่งกด)
+  useEffect(() => setSeatMsg(null), [cityId, seat])
 
   // คืนหน่วยความจำของรูปพรีวิวเมื่อเปลี่ยนรูปหรือปิดฟอร์ม
   useEffect(() => () => { if (image.kind === 'new') URL.revokeObjectURL(image.preview) }, [image])
@@ -130,6 +135,35 @@ export function PuzzleEditor({ cities }: { cities: City[] }) {
     })
   }
 
+  /**
+   * ปิดที่นั่งที่ไม่มีคนนั่ง — ไม่อย่างนั้นโซ่ทั้งเมืองค้างอยู่ตรงนี้ถาวร
+   * ต่างจาก "ปลดที่นั่ง" ตรงที่ไม่บันทึกเป็นการไขผ่านของคนที่ไม่มีตัวตน
+   */
+  async function toggleSeat() {
+    if (!loaded?.exists) return
+    const closing = loaded.isActive
+    const ok = await confirm(closing
+      ? {
+          tone: 'danger', title: `ปิดที่นั่งคาวบอย #${seat}?`, confirmLabel: 'ปิดที่นั่ง',
+          message: <>โซ่จะข้ามที่นั่งนี้ไปคนถัดไปทันที และปริศนาข้อนี้จะไม่ถูกนับในจำนวนทั้งค่าย<br />
+            {loaded.owner
+              ? <><strong>{loaded.owner}</strong> นั่งอยู่ที่นี่ — จะไม่เห็นปริศนาอีก</>
+              : 'ที่นั่งนี้ยังไม่มีใครนั่ง'}</>,
+        }
+      : {
+          title: `เปิดที่นั่งคาวบอย #${seat} กลับ?`, confirmLabel: 'เปิดที่นั่ง',
+          message: 'โซ่จะวนกลับมาหยุดที่ที่นั่งนี้ ถ้ายังไม่มีใครไขผ่าน',
+        })
+    if (!ok) return
+    setSeatMsg(null)
+    startSeat(async () => {
+      const res = await setSeatActiveAction(cityId, seat, !closing,
+        closing ? 'ปิดที่นั่งที่ไม่มีคนนั่ง' : 'เปิดที่นั่งกลับ')
+      setSeatMsg(res.error ? { text: res.error, bad: true } : { text: res.message ?? 'บันทึกแล้ว' })
+      if (!res.error) setReloadKey(k => k + 1)
+    })
+  }
+
   const shownImage =
     image.kind === 'new' ? image.preview
     : image.kind === 'keep' ? loaded?.mediaUrl ?? null
@@ -164,6 +198,33 @@ export function PuzzleEditor({ cities }: { cities: City[] }) {
             : loaded.isSolved ? 'แก้ปริศนาเดิม · ⚠ คาวบอยคนนี้ไขผ่านไปแล้ว'
             : 'แก้ปริศนาเดิม · เปลี่ยนเฉพาะช่องที่ต้องการได้เลย')}
         </p>
+
+        {/* ── ที่นั่งนี้เปิดอยู่ไหม · ใครนั่ง ── */}
+        {loaded?.exists && (
+          <div className="seat-state" data-off={!loaded.isActive}>
+            <span className="seat-state-text">
+              <strong>{loaded.isActive ? 'ที่นั่งนี้เปิดอยู่' : 'ที่นั่งนี้ถูกปิดไว้'}</strong>
+              <small>
+                {loaded.owner
+                  ? `${loaded.owner} นั่งอยู่ที่นี่`
+                  : 'ยังไม่มีใครนั่ง — ถ้าปล่อยไว้ โซ่ทั้งเมืองจะค้างที่นี่'}
+                {!loaded.isActive && ' · โซ่ข้ามที่นั่งนี้ไปแล้ว'}
+              </small>
+            </span>
+            <button type="button" className="btn-ghost puzzle-edit-btn" disabled={seatPending || loaded.isSolved}
+                    onClick={toggleSeat}
+                    title={loaded.isSolved ? 'ที่นั่งที่ไขผ่านแล้วปิดไม่ได้' : undefined}>
+              {loaded.isActive
+                ? <><DoorClosed size={14} aria-hidden="true" /> {seatPending ? 'กำลังปิด…' : 'ปิดที่นั่งนี้'}</>
+                : <><DoorOpen size={14} aria-hidden="true" /> {seatPending ? 'กำลังเปิด…' : 'เปิดที่นั่งกลับ'}</>}
+            </button>
+          </div>
+        )}
+        {seatMsg && (
+          <p role="status" style={{ margin: 0, fontSize: '0.84rem', color: seatMsg.bad ? 'var(--ember)' : 'var(--neon)' }}>
+            {seatMsg.text}
+          </p>
+        )}
 
         <div>
           <label htmlFor="pe-title" className="label">ชื่อด่าน</label>

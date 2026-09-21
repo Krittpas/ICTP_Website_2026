@@ -10,6 +10,7 @@ import { STORAGE_KEY } from '@/lib/storage'
 import { NAME_RULE, THAI_FULL_NAME, THAI_NICKNAME, tidyName } from '@/lib/profile/names'
 import { PUZZLE_BUCKET } from '@/lib/puzzles/media'
 import type { PuzzleForEdit } from '@/lib/puzzles/edit'
+import type { ReadinessReport } from '@/types/app'
 import { BULK_CHUNK, parsePastedRows, type BulkStudentResult, type BulkStudentRow } from '@/lib/admin/rows'
 
 type Result = { ok?: true; error?: string; message?: string; data?: Record<string, unknown> }
@@ -43,6 +44,8 @@ async function callRpc(fn: string, args: Record<string, unknown>): Promise<Resul
   if (status === 'senior_in_use')   return {
     error: `ลบไม่ได้ ยังมีน้องผูกกับพี่คนนี้อยู่ ${(data as { count?: number })?.count ?? ''} คน — ย้ายน้องไปพี่คนอื่นก่อน`,
   }
+  if (status === 'no_change')       return { error: 'ค่าเดิมอยู่แล้ว ไม่มีอะไรเปลี่ยน' }
+  if (status === 'invalid_seat')    return { error: 'เมืองหรือที่นั่งปลายทางไม่ถูกต้อง' }
   if (status === 'student_not_found') return { error: 'ไม่พบบัญชีน้องค่ายอีเมลนี้' }
   if (status === 'not_a_student')   return { error: 'ออกรหัสผ่านใหม่ได้เฉพาะบัญชีน้องค่าย' }
   if (status === 'invalid_names')   return { error: `บรรทัดที่ ${(rows ?? []).join(', ')} ไม่ถูกต้อง — ${NAME_RULE} (ไม่ได้บันทึกสักแถว)` }
@@ -135,7 +138,10 @@ export async function getPuzzleForEditAction(cityId: number, seat: number): Prom
 
   const d = (data ?? {}) as Record<string, unknown>
   if (d.status === 'not_found') {
-    return { exists: false, title: '', prompt: '', hint: '', secretCode: '', isSolved: false, mediaPath: null, mediaUrl: null }
+    return {
+      exists: false, title: '', prompt: '', hint: '', secretCode: '',
+      isSolved: false, isActive: true, owner: '', mediaPath: null, mediaUrl: null,
+    }
   }
   if (d.status !== 'ok') return { error: 'ไม่มีสิทธิ์' }
 
@@ -153,9 +159,68 @@ export async function getPuzzleForEditAction(cityId: number, seat: number): Prom
     hint: String(d.hint ?? ''),
     secretCode: String(d.secret_code ?? ''),
     isSolved: d.is_solved === true,
+    // ยังไม่ได้รัน migration 017 = ไม่มีคีย์นี้ ถือว่าเปิดอยู่ตามเดิม
+    isActive: d.is_active !== false,
+    owner: String(d.owner ?? ''),
     mediaPath,
     mediaUrl,
   }
+}
+
+/**
+ * ปิด/เปิดที่นั่ง — ที่นั่งที่ไม่มีคนนั่งทำให้โซ่ทั้งเมืองค้างถาวร (migration 017)
+ * ปิดแล้วโซ่ข้ามไปคนถัดไปเอง และจำนวนปริศนาทั้งค่ายลดลงตามจริง
+ */
+export async function setSeatActiveAction(cityId: number, seat: number, active: boolean, reason: string): Promise<Result> {
+  const res = await callRpc('admin_set_seat_active', {
+    p_city_id: cityId, p_seat_index: seat, p_active: active, p_reason: reason.trim(),
+  })
+  if (!res.ok) return res
+  const owner = String(res.data?.owner ?? '')
+  return {
+    ok: true,
+    message: active
+      ? 'เปิดที่นั่งนี้กลับแล้ว โซ่จะวนกลับมาที่นี่'
+      : `ปิดที่นั่งนี้แล้ว โซ่ข้ามไปคนถัดไป${owner ? ` · ${owner} จะไม่เห็นปริศนาอีก` : ''}`,
+  }
+}
+
+/**
+ * ย้ายน้องรายคน — เมือง/ที่นั่งเป็น null ทั้งคู่ = เอาออกจากที่นั่ง
+ * ที่นั่งปลายทางมีคนอยู่แล้ว ฐานข้อมูลจะสลับที่ให้ ไม่มีใครหลุดที่นั่งเงียบ ๆ
+ */
+export async function moveStudentAction(
+  email: string, cityId: number | null, seat: number | null, reason: string,
+): Promise<Result> {
+  const clean = normalizeEmail(email)
+  if (!isStudentEmail(clean)) return { error: 'อีเมลน้องต้องเป็น sXXXXX@bj.ac.th' }
+
+  const res = await callRpc('admin_move_student', {
+    p_email: clean, p_city_id: cityId, p_seat_index: seat, p_reason: reason.trim(),
+  })
+  if (!res.ok) return res
+
+  const swapped = String(res.data?.swapped_with ?? '')
+  const kicked = res.data?.swapped_to_none === true
+  const solved = res.data?.seat_solved === true
+
+  const parts = [cityId ? `ย้ายไปเมือง ${String(cityId).padStart(2, '0')} · คาวบอย #${seat}` : 'เอาออกจากที่นั่งแล้ว']
+  if (swapped) parts.push(kicked ? `${swapped} หลุดจากที่นั่งนี้ ต้องจัดที่ให้ใหม่` : `สลับที่กับ ${swapped}`)
+  if (solved) parts.push('ที่นั่งนี้ถูกไขผ่านไปแล้ว น้องจะเห็นรหัสลับของที่นั่งนี้ทันที')
+  return { ok: true, message: parts.join(' · ') }
+}
+
+/** ตรวจความพร้อมก่อนวันงาน — รวมทุกอย่างที่ต้องครบไว้ในคำขอเดียว (migration 017) */
+export async function getReadinessAction(): Promise<ReadinessReport | { error: string }> {
+  if (!(await getActionAdmin())) return { error: 'ไม่มีสิทธิ์' }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('admin_readiness')
+  if (error) return { error: 'ยังตรวจไม่ได้ — ต้องรัน migration 017 ก่อน' }
+
+  const report = data as ReadinessReport | { status?: string }
+  if (report?.status !== 'ok') return { error: 'ไม่มีสิทธิ์' }
+  return report as ReadinessReport
 }
 
 /**

@@ -1709,6 +1709,188 @@ html:has(.story[open]) { overflow: hidden; }
   .dispatch-foot { justify-content: flex-start; }
 }
 
+/* ── รหัสลับของน้อง ───────────────────────────────────────
+ * 18 อักขระมีอักขระพิเศษปน พิมพ์ตามจากหน้าจอพลาดง่าย ปุ่มคัดลอกจึงต้องเด่นพอ ๆ กับตัวรหัส
+ */
+.code-box {
+  padding: 1.2rem 1rem;
+  border-radius: 3px;
+  background: var(--plank-2);
+  border: 1px solid var(--neon);
+}
+
+.code-box-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; }
+
+.code-box-value {
+  font-family: var(--tech);
+  font-size: 1.55rem;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  color: var(--neon);
+  word-break: break-all;
+  /* เลือกทั้งก้อนได้ด้วยการกดค้าง เผื่อปุ่มคัดลอกใช้ไม่ได้ */
+  user-select: all;
+}
+
+.code-box-copy {
+  width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.65rem 1rem;
+}
+
+.code-box-note {
+  margin: 0.8rem 0 0;
+  font-size: 0.76rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* ── ที่นั่งเปิด/ปิด ในคลังปริศนา ───────────────────────── */
+.seat-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0.75rem 0.9rem;
+  border-radius: 3px;
+  background: var(--plank-2);
+  border-left: 3px solid var(--neon);
+}
+
+.seat-state[data-off="true"] { border-left-color: var(--ember); }
+
+.seat-state-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.seat-state-text strong { font-size: 0.9rem; font-weight: 600; }
+.seat-state-text small { font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+
+/* ── ตรวจความพร้อม ─────────────────────────────────────── */
+.ready-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.9rem 1rem;
+  border-radius: 3px;
+  background: var(--plank-2);
+  border-left: 3px solid var(--neon);
+  color: var(--neon);
+}
+
+.ready-head[data-state="warn"]    { border-left-color: var(--brass); color: var(--brass-lit); }
+.ready-head[data-state="blocked"] { border-left-color: var(--ember); color: var(--ember); }
+
+.ready-head > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ready-head strong { font-family: var(--display); font-size: 1.15rem; font-weight: 400; }
+.ready-head small  { font-size: 0.8rem; color: var(--muted); }
+
+.ready-stats {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.ready-stats strong { color: var(--text); font-weight: 600; }
+
+.ready-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.ready-row {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.ready-row:last-child { border-bottom: none; }
+
+.ready-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ready-row[data-tone="ok"]      .ready-mark { color: var(--neon);  background: color-mix(in oklab, var(--neon) 15%, transparent); }
+.ready-row[data-tone="warn"]    .ready-mark { color: var(--brass-lit); background: color-mix(in oklab, var(--brass) 18%, transparent); }
+.ready-row[data-tone="blocked"] .ready-mark { color: var(--ember); background: color-mix(in oklab, var(--ember) 15%, transparent); }
+
+.ready-title {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.ready-row[data-tone="ok"] .ready-title { color: var(--muted); }
+
+.ready-count { font-family: var(--tech); font-size: 0.76rem; color: var(--muted); }
+.ready-row[data-tone="blocked"] .ready-count { color: var(--ember); }
+.ready-row[data-tone="warn"]    .ready-count { color: var(--brass-lit); }
+
+.ready-fix    { margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--muted); line-height: 1.7; }
+.ready-sample {
+  margin: 0.3rem 0 0;
+  font-family: var(--tech);
+  font-size: 0.76rem;
+  color: var(--muted);
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+/* ── ตอนนี้ค้างที่ใคร ──────────────────────────────────── */
+.stuck-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.stuck-row {
+  display: grid;
+  gap: 4px 14px;
+  grid-template-columns: 150px 1fr auto auto;
+  align-items: center;
+  padding: 0.7rem 0.85rem;
+  border-radius: 3px;
+  background: var(--plank-2);
+  border-left: 3px solid var(--line);
+  font-size: 0.88rem;
+}
+
+.stuck-row[data-tone="live"]  { border-left-color: var(--brass); }
+.stuck-row[data-tone="stuck"] { border-left-color: var(--brass-lit); background: color-mix(in oklab, var(--brass) 15%, var(--plank-2)); }
+.stuck-row[data-tone="empty"] { border-left-width: 5px; border-left-color: var(--ember); background: color-mix(in oklab, var(--ember) 16%, var(--plank-2)); }
+.stuck-row[data-tone="done"]  { border-left-color: var(--neon); opacity: 0.72; }
+
+.stuck-city { display: flex; flex-direction: column; min-width: 0; }
+.stuck-city strong { font-family: var(--display); font-size: 1rem; font-weight: 400; color: var(--brass-lit); }
+.stuck-city small  { font-size: 0.72rem; color: var(--muted); }
+
+.stuck-who  { display: flex; align-items: center; gap: 7px; min-width: 0; line-height: 1.5; }
+.stuck-row[data-tone="empty"] .stuck-who { color: var(--ember); }
+.stuck-row[data-tone="done"]  .stuck-who { color: var(--neon); }
+
+.stuck-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--tech);
+  font-size: 0.76rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.stuck-row[data-tone="stuck"] .stuck-time { color: var(--brass-lit); }
+
+.stuck-count { font-family: var(--tech); font-size: 0.86rem; white-space: nowrap; text-align: right; }
+
+@media (max-width: 720px) {
+  .stuck-row { grid-template-columns: 1fr auto; }
+  .stuck-who { grid-column: 1 / -1; }
+  .stuck-time { justify-self: start; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

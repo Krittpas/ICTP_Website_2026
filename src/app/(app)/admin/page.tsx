@@ -10,7 +10,10 @@ import { SeniorMatchPanel } from '@/components/admin/SeniorMatchPanel'
 import { StudentCreator } from '@/components/admin/StudentCreator'
 import { StudentNamesPanel, type StudentRow } from '@/components/admin/StudentNamesPanel'
 import { StudentBulkCreator } from '@/components/admin/StudentBulkCreator'
-import type { AuditEntry, City, CityProgress, Senior, SeniorMatchRow } from '@/types/app'
+import { MoveStudentPanel } from '@/components/admin/MoveStudentPanel'
+import { ReadinessPanel } from '@/components/admin/ReadinessPanel'
+import { CityStatusPanel } from '@/components/admin/CityStatusPanel'
+import type { AuditEntry, City, CityProgress, CityStatus, ReadinessReport, Senior, SeniorMatchRow } from '@/types/app'
 
 export const metadata = { title: 'แผงควบคุมพี่ค่าย' }
 
@@ -21,7 +24,10 @@ export default async function AdminPage() {
   const [admin, camp] = await Promise.all([requireAdmin(), getCampState()])
   const supabase = await createClient()
 
-  const [{ data: cities }, { data: progress }, { data: audit }, { data: studentRows }, { data: matchData }, { data: seniorData }] = await Promise.all([
+  const [
+    { data: cities }, { data: progress }, { data: audit }, { data: studentRows },
+    { data: matchData }, { data: seniorData }, { data: readyData }, { data: cityStatus },
+  ] = await Promise.all([
     supabase.from('cities').select('*').order('id'),
     supabase.from('city_progress').select('city_id, current_seat, solved_count, last_solved_at').order('city_id'),
     supabase.from('admin_audit').select('id, action, payload, reason, created_at').order('created_at', { ascending: false }).limit(12),
@@ -31,6 +37,9 @@ export default async function AdminPage() {
     supabase.rpc('admin_list_senior_matches'),
     // ทะเบียนพี่รหัส — ต้องรัน migration 016 ก่อน
     supabase.rpc('admin_list_seniors'),
+    // ตรวจความพร้อม + สถานะรายเมือง — ต้องรัน migration 017 ก่อน ไม่งั้นได้ null แล้วซ่อนไว้
+    supabase.rpc('admin_readiness'),
+    supabase.rpc('admin_city_status'),
   ])
 
   const townList = (cities ?? []) as City[]
@@ -38,6 +47,7 @@ export default async function AdminPage() {
   const solved = rows.reduce((s, r) => s + r.solved_count, 0)
   const { total } = await getPuzzleTotals(townList.map(c => c.id))
   const students = (studentRows ?? []) as StudentRow[]
+  const ready = (readyData as ReadinessReport | null)?.status === 'ok' ? readyData as ReadinessReport : null
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -50,6 +60,10 @@ export default async function AdminPage() {
         </p>
       </div>
 
+      <ReadinessPanel initial={ready} />
+
+      <CityStatusPanel rows={(cityStatus ?? []) as CityStatus[]} />
+
       <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
         <OverridePanel
           unlocked={camp.decrypt_unlocked}
@@ -60,6 +74,7 @@ export default async function AdminPage() {
         <CampControls open={camp.camp_open} opensAt={camp.opens_at} studentCount={students.length} />
         <ForceSolvePanel cities={townList} />
         <StudentCreator />
+        <MoveStudentPanel students={students} cities={townList} />
       </div>
 
       <PuzzleEditor cities={townList} />

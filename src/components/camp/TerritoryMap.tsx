@@ -25,7 +25,7 @@ export function TerritoryMap({ cities, progress, totals, highlightCityId, onSele
         alt="แผนที่ดินแดนหุบเขาแบบลายเส้น แสดงเมืองทั้งหกเเละสถานที่ต่าง ๆ"
         fill
         sizes="(max-width: 900px) 100vw, 900px"
-        priority
+        preload
         style={{ objectFit: 'cover', filter: 'var(--map-filter)', opacity: 0.72 }}
       />
 

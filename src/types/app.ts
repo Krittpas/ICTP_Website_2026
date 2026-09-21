@@ -110,6 +110,41 @@ export interface Senior {
   revealed: number
 }
 
+/** หนึ่งข้อตรวจความพร้อม — count = 0 คือผ่าน (migration 017) */
+export interface ReadinessCheck {
+  key: string
+  count: number
+  /** ตัวอย่างรายการที่ยังไม่ผ่าน สูงสุด 8 รายการ */
+  sample: string[]
+}
+
+export interface ReadinessReport {
+  status: 'ok'
+  students: number
+  active_puzzles: number
+  camp_open: boolean
+  decrypt_unlocked: boolean
+  opens_at: string | null
+  checks: ReadinessCheck[]
+}
+
+/** สถานะหนึ่งเมืองสำหรับดูหน้างาน (migration 017) */
+export interface CityStatus {
+  city_id: number
+  name_en: string
+  current_seat: number
+  solved: number
+  total: number
+  done: boolean
+  last_solved_at: string | null
+  /** ไม่มีใครตอบถูกมากี่นาทีแล้ว */
+  idle_minutes: number
+  waiting_name: string
+  waiting_email: string
+  /** ที่นั่งที่ถึงตามีคนนั่งอยู่จริงไหม — false = โซ่ค้างเพราะไม่มีคน */
+  waiting_seated: boolean
+}
+
 /** หนึ่งแถวในหน้าพี่ค่าย — น้องหนึ่งคนกับพี่รหัสที่ตั้งไว้ (ถ้ามี) */
 export interface SeniorMatchRow {
   email: string
