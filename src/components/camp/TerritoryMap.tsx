@@ -20,11 +20,17 @@ export function TerritoryMap({ cities, progress, totals, highlightCityId, onSele
       background: 'var(--plank)', border: '1px solid var(--line)',
       borderRadius: 4, overflow: 'hidden',
     }}>
+      {/*
+        เป็น .webp ไม่ใช่ .svg แล้ว — next/image ย่อให้พอดีกับที่แสดงจริงและแปลงฟอร์แมตให้
+        (SVG ถูกส่งผ่านไปดิบ ๆ ไม่ผ่านตัวย่อรูป จึงกินแบนด์วิดท์เต็มไฟล์เสมอ)
+        สัดส่วน 16:9 เท่าไฟล์เดิม ตำแหน่งหมุดเมืองที่คิดเป็น % จึงไม่เลื่อน
+        sizes อิงความกว้างจริงของคอลัมน์ (main สูงสุด 1240 ลบ padding ข้างละ 1rem)
+      */}
       <Image
-        src="/territory-map.svg"
+        src="/territory-map.webp"
         alt="แผนที่ดินแดนหุบเขาแบบลายเส้น แสดงเมืองทั้งหกเเละสถานที่ต่าง ๆ"
         fill
-        sizes="(max-width: 900px) 100vw, 900px"
+        sizes="(max-width: 1240px) 100vw, 1208px"
         preload
         style={{ objectFit: 'cover', filter: 'var(--map-filter)', opacity: 0.72 }}
       />

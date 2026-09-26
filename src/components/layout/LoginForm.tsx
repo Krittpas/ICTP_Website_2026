@@ -3,13 +3,27 @@
 import { useActionState, useState } from 'react'
 import { Eye, EyeOff, TriangleAlert } from 'lucide-react'
 import { loginAction, type LoginState } from '@/actions/auth'
+import { SaloonEntrance } from './SaloonEntrance'
+
+/**
+ * หน่วงก่อนส่งไปตรวจ เพื่อให้ประตูเปิดทันเห็น
+ * ตอบถูกจะถูกเด้งไปหน้าค่ายทันทีที่ตรวจเสร็จ ฉากที่เหลือจึงเล่นไม่จบอยู่แล้ว
+ * ยาวกว่านี้ = คนพิมพ์รหัสผิดต้องรอนานขึ้นโดยไม่ได้อะไร
+ */
+const DOOR_MS = 650
 
 export function LoginForm() {
-  const [state, action, pending] = useActionState<LoginState, FormData>(loginAction, null)
   const [show, setShow] = useState(false)
+  const [state, action, pending] = useActionState<LoginState, FormData>(async (prev, formData) => {
+    await new Promise(resolve => setTimeout(resolve, DOOR_MS))
+    return loginAction(prev, formData)
+  }, null)
 
   return (
     <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 440 }}>
+      {/* โหลดมาสคอตไว้ล่วงหน้า ฉากจะได้ไม่ขึ้นมาเป็นช่องว่างตอนกดปุ่ม */}
+      <link rel="preload" as="image" href="/mascot-rider.webp" />
+      {pending && <SaloonEntrance />}
       <div>
         <label htmlFor="email" className="label">อีเมล</label>
         <input
@@ -61,6 +75,9 @@ export function LoginForm() {
       <button type="submit" className="btn-brass" disabled={pending} style={{ width: '100%' }}>
         {pending ? 'กำลังผลักประตู…' : 'ผลักประตูเข้าไป →'}
       </button>
+
+      {/* ฉากประตูซ่อนจาก screen reader ทั้งก้อน สถานะจึงต้องบอกด้วยข้อความตรงนี้แทน */}
+      <span className="sr-only" role="status">{pending ? 'กำลังเข้าสู่ระบบ' : ''}</span>
     </form>
   )
 }

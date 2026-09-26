@@ -13,6 +13,8 @@ import { StudentBulkCreator } from '@/components/admin/StudentBulkCreator'
 import { MoveStudentPanel } from '@/components/admin/MoveStudentPanel'
 import { ReadinessPanel } from '@/components/admin/ReadinessPanel'
 import { CityStatusPanel } from '@/components/admin/CityStatusPanel'
+import { AdminTabs, type AdminSection } from '@/components/admin/AdminTabs'
+import { countBlockers } from '@/lib/admin/readiness'
 import type { AuditEntry, City, CityProgress, CityStatus, ReadinessReport, Senior, SeniorMatchRow } from '@/types/app'
 
 export const metadata = { title: 'แผงควบคุมพี่ค่าย' }
@@ -49,6 +51,97 @@ export default async function AdminPage() {
   const students = (studentRows ?? []) as StudentRow[]
   const ready = (readyData as ReadinessReport | null)?.status === 'ok' ? readyData as ReadinessReport : null
 
+
+  const auditRows = (audit ?? []) as AuditEntry[]
+
+  const sections: AdminSection[] = [
+    {
+      id: 'live',
+      label: 'วันงาน',
+      blurb: 'ตรวจความพร้อม เปิด/ปิดระบบ และดูว่าตอนนี้เมืองไหนค้างอยู่ที่ใคร',
+      alert: countBlockers(ready),
+      content: (
+        <>
+          <ReadinessPanel initial={ready} />
+          <CityStatusPanel rows={(cityStatus ?? []) as CityStatus[]} />
+          <div className="admin-grid">
+            <CampControls open={camp.camp_open} opensAt={camp.opens_at} studentCount={students.length} />
+            <OverridePanel
+              unlocked={camp.decrypt_unlocked}
+              mode={camp.decrypt_unlock_mode}
+              solved={solved}
+              total={total}
+            />
+            <ForceSolvePanel cities={townList} />
+          </div>
+        </>
+      ),
+    },
+    {
+      id: 'puzzles',
+      label: 'ปริศนา',
+      blurb: 'ใส่โจทย์ รูป คำใบ้ และรหัสลับของทุกที่นั่ง · ปิดที่นั่งที่ไม่มีคนนั่งได้ที่นี่',
+      content: <PuzzleEditor cities={townList} />,
+    },
+    {
+      id: 'students',
+      label: 'น้องค่าย',
+      blurb: 'สร้างบัญชี ตั้งชื่อ ออกรหัสผ่านใหม่ และย้ายน้องระหว่างเมือง',
+      content: (
+        <>
+          <div className="admin-grid">
+            <StudentCreator />
+            <MoveStudentPanel students={students} cities={townList} />
+          </div>
+          <StudentBulkCreator />
+          <StudentNamesPanel students={students} />
+        </>
+      ),
+    },
+    {
+      id: 'seniors',
+      label: 'พี่รหัส',
+      blurb: 'ทะเบียนพี่รหัสกับคำใบ้ แล้วจับคู่ว่าน้องคนไหนเป็นของพี่คนไหน',
+      content: Array.isArray(matchData)
+        ? <SeniorMatchPanel rows={matchData as SeniorMatchRow[]} seniors={(seniorData ?? []) as Senior[]} />
+        : <p className="panel admin-empty">ส่วนนี้ต้องรัน migration 010 ขึ้นไปก่อน</p>,
+    },
+    {
+      id: 'audit',
+      label: 'บันทึก',
+      blurb: 'ทุกการใช้สิทธิ์ของพี่ค่ายถูกบันทึกไว้พร้อมชื่อผู้กดและเหตุผล',
+      content: (
+        <section className="panel" style={{ padding: '1.4rem' }}>
+          <h2 className="stamp" style={{ fontSize: '0.76rem', color: 'var(--neon)', margin: '0 0 1rem' }}>
+            บันทึกการใช้สิทธิ์ · admin_audit
+          </h2>
+          {auditRows.length === 0 ? (
+            <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.88rem' }}>ยังไม่มีการใช้สิทธิ์</p>
+          ) : (
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {auditRows.map(row => (
+                <li key={row.id} style={{
+                  display: 'flex', gap: 14, flexWrap: 'wrap',
+                  paddingBottom: 10, borderBottom: '1px solid var(--line)', fontSize: '0.84rem',
+                }}>
+                  <span style={{ fontFamily: 'var(--tech)', fontSize: '0.75rem', color: 'var(--muted)', minWidth: 130 }}>
+                    {fmt(row.created_at)}
+                  </span>
+                  <span style={{ fontFamily: 'var(--tech)', color: 'var(--brass-lit)', minWidth: 160 }}>
+                    {row.action}
+                  </span>
+                  <span style={{ flexGrow: 1, color: 'var(--muted)' }}>
+                    {row.reason ?? JSON.stringify(row.payload)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ),
+    },
+  ]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
@@ -60,63 +153,7 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      <ReadinessPanel initial={ready} />
-
-      <CityStatusPanel rows={(cityStatus ?? []) as CityStatus[]} />
-
-      <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-        <OverridePanel
-          unlocked={camp.decrypt_unlocked}
-          mode={camp.decrypt_unlock_mode}
-          solved={solved}
-          total={total}
-        />
-        <CampControls open={camp.camp_open} opensAt={camp.opens_at} studentCount={students.length} />
-        <ForceSolvePanel cities={townList} />
-        <StudentCreator />
-        <MoveStudentPanel students={students} cities={townList} />
-      </div>
-
-      <PuzzleEditor cities={townList} />
-
-      <StudentBulkCreator />
-
-      <StudentNamesPanel students={students} />
-
-      {Array.isArray(matchData) && (
-        <SeniorMatchPanel
-          rows={matchData as SeniorMatchRow[]}
-          seniors={(seniorData ?? []) as Senior[]}
-        />
-      )}
-
-      <section className="panel" style={{ padding: '1.4rem' }}>
-        <h2 className="stamp" style={{ fontSize: '0.76rem', color: 'var(--neon)', margin: '0 0 1rem' }}>
-          บันทึกการใช้สิทธิ์ · admin_audit
-        </h2>
-        {(audit ?? []).length === 0 ? (
-          <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.88rem' }}>ยังไม่มีการใช้สิทธิ์</p>
-        ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {(audit as AuditEntry[]).map(row => (
-              <li key={row.id} style={{
-                display: 'flex', gap: 14, flexWrap: 'wrap',
-                paddingBottom: 10, borderBottom: '1px solid var(--line)', fontSize: '0.84rem',
-              }}>
-                <span style={{ fontFamily: 'var(--tech)', fontSize: '0.75rem', color: 'var(--muted)', minWidth: 130 }}>
-                  {fmt(row.created_at)}
-                </span>
-                <span style={{ fontFamily: 'var(--tech)', color: 'var(--brass-lit)', minWidth: 160 }}>
-                  {row.action}
-                </span>
-                <span style={{ flexGrow: 1, color: 'var(--muted)' }}>
-                  {row.reason ?? JSON.stringify(row.payload)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <AdminTabs sections={sections} />
     </div>
   )
 }

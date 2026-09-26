@@ -3,47 +3,9 @@
 import { useState, useTransition } from 'react'
 import { Check, RefreshCw, TriangleAlert } from 'lucide-react'
 import { getReadinessAction } from '@/actions/admin'
+import { READINESS_LABELS as LABELS } from '@/lib/admin/readiness'
 import type { ReadinessCheck, ReadinessReport } from '@/types/app'
 
-/** คำอธิบายของแต่ละข้อตรวจ — key ต้องตรงกับ admin_readiness() ใน migration 017 */
-const LABELS: Record<string, { title: string; fix: string; hard?: boolean }> = {
-  empty_seats: {
-    title: 'ที่นั่งที่เปิดอยู่แต่ไม่มีใครนั่ง',
-    fix: 'โซ่ทั้งเมืองจะค้างตรงนี้ — ย้ายน้องมาลง หรือกด "ปิดที่นั่งนี้" ในคลังปริศนา',
-    hard: true,
-  },
-  puzzle_content: {
-    title: 'ปริศนาที่ไม่มีทั้งรูปและข้อความโจทย์',
-    fix: 'น้องจะเปิดมาเจอแค่ชื่อด่าน — ใส่รูปหรือข้อความในคลังปริศนา',
-    hard: true,
-  },
-  student_seats: {
-    title: 'น้องที่ยังไม่มีที่นั่ง',
-    fix: 'กดสุ่มจัดเมือง หรือย้ายรายคนในส่วน "ย้ายน้องรายคน"',
-    hard: true,
-  },
-  senior_matches: {
-    title: 'น้องที่ยังไม่ได้จับคู่พี่รหัส',
-    fix: 'ถอดรหัสแล้วจะขึ้นว่ายังไม่มีพี่รหัส — จับคู่ในส่วน "จับคู่พี่รหัส"',
-    hard: true,
-  },
-  student_names: {
-    title: 'น้องที่ชื่อยังไม่ใช่ภาษาไทย',
-    fix: 'แก้ในส่วน "รายชื่อน้องค่าย" — ชื่อนี้เพื่อนร่วมเมืองเห็นในแถบลำดับคาวบอย',
-  },
-  puzzle_codes: {
-    title: 'ปริศนาที่รหัสลับยังไม่ใช่ชุดสุ่ม 18 อักขระ',
-    fix: 'น่าจะยังเป็นรหัสตัวอย่างจาก seed — กด "สุ่มรหัสลับใหม่ทุกข้อ" ท้ายคลังปริศนา',
-  },
-  senior_clues: {
-    title: 'พี่รหัสที่ยังไม่มีคำใบ้',
-    fix: 'น้องถอดรหัสแล้วจะเห็นแค่ชื่อพี่ ไม่มีเบาะแสให้ตามหา',
-  },
-  orphan_matches: {
-    title: 'คู่ที่จับไว้แล้วแต่อีเมลยังไม่มีบัญชี',
-    fix: 'มักเป็นอีเมลพิมพ์ผิด — ตรวจในตารางท้ายส่วน "จับคู่พี่รหัส"',
-  },
-}
 
 /**
  * ตรวจความพร้อมก่อนวันงาน

@@ -17,10 +17,14 @@ export default async function CampHomePage() {
         <div className="panel" style={{ maxWidth: 560, width: '100%', padding: '2rem 1.75rem', textAlign: 'center' }}>
           <span className="stamp" style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>✦ ICTP OFFICIAL NOTICE ✦</span>
 
+          {/* พื้นหลังโปร่งใสแล้ว จึงไม่ต้องมีกรอบมากลบพื้นขาวเหมือนเดิม */}
           <Image
             src="/mascot-stand.webp" alt="มาสคอตวัวคาวบอยยืนเฝ้าประตู"
-            width={160} height={160} preload
-            style={{ display: 'block', margin: '1rem auto 0.5rem', width: 160, height: 'auto', borderRadius: 16, border: '1px solid var(--line)' }}
+            width={900} height={1160} preload
+            style={{
+              display: 'block', margin: '0.75rem auto 0.25rem', width: 150, height: 'auto',
+              filter: 'drop-shadow(0 12px 18px rgba(0, 0, 0, 0.35))',
+            }}
           />
 
           <h1 style={{ fontFamily: 'var(--display)', fontSize: '1.9rem', lineHeight: 1.2, color: 'var(--brass-lit)', margin: '0 0 0.6rem' }}>
