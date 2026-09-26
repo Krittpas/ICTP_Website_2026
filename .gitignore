@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ยกเว้นไฟล์ตัวอย่าง — README สั่งให้ cp .env.example .env.local
+# ถ้าไม่ยกเว้น คนที่ clone ใหม่จะทำตาม README ไม่ได้
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +42,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ไฟล์ต้นฉบับความละเอียดสูง (เช่น hero-banner.png 18750x6250)
+# เก็บไว้ในเครื่องได้ แต่ไม่ต้องอยู่ใน repo — ทำให้ clone ช้าโดยไม่จำเป็น
+# ไฟล์ที่เว็บใช้จริงถูกย่อไว้ใน public/ แล้ว
+/art/

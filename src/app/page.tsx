@@ -50,8 +50,14 @@ export default async function LandingPage() {
 
       {/* ── Hero: ภาพเต็มจอ ── */}
       <section id="top" className="hero">
+        {/*
+          เคยเป็น .svg ที่ฝังรูปไว้ข้างใน 33 MB และใส่ unoptimized ไว้ด้วย
+          = ทุกคนที่เปิดหน้านี้ต้องโหลดเต็มไฟล์ ไม่ผ่านตัวย่อรูปเลย
+          .webp ปล่อยให้ next/image ย่อและแปลงฟอร์แมตตามจอที่เปิดจริง
+        */}
         <Image
-          src="/hero-banner.svg" alt="" fill preload unoptimized
+          src="/hero-banner.webp" alt="" fill preload
+          sizes="100vw"
           className="hero-bg"
         />
         <div className="hero-shade" aria-hidden="true" />

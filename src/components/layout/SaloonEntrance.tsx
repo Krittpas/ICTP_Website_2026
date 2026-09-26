@@ -37,7 +37,7 @@ export function SaloonEntrance() {
       </div>
 
       <div className="saloon-dust" />
-      <p className="saloon-caption stamp">PUSHING THROUGH THE SALOON DOORS…</p>
+      <p className="saloon-caption">กำลังผลักประตูซาลูนเข้าไป…</p>
     </div>,
     document.body,
   )

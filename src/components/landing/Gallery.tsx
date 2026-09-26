@@ -23,7 +23,7 @@ export function Gallery({ photos }: { photos: GalleryPhoto[] }) {
   const empty = photos.length === 0
 
   return (
-    <div className="gallery">
+    <div>
       <ul ref={track} className="gallery-track" aria-label="ภาพบรรยากาศค่ายปีก่อน ๆ">
         {empty
           ? Array.from({ length: PLACEHOLDERS }, (_, i) => (

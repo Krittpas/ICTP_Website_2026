@@ -43,8 +43,8 @@ src/
 ├ content/gallery.ts       รายการภาพบรรยากาศค่ายปีก่อน ๆ บนหน้าแรก
 ├ lib/                     supabase · auth (DAL) · camp state
 └ types/app.ts
-public/                    hero-banner.svg (ย่อจาก "ICTP banner 2026.svg" โดยแปลงรูปข้างในเป็น WebP) · logo-ictp.webp · gallery/
-supabase/migrations/       001 → 018
+public/                    hero-banner.webp · territory-map.webp · mascot-*.webp · logo-ictp.webp · gallery/
+supabase/migrations/       001 → 019
 ```
 
 ## หลักความปลอดภัย 5 ข้อ

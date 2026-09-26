@@ -2072,8 +2072,10 @@ html:has(.story[open]) { overflow: hidden; }
   transform: translateX(-50%);
   margin: 0;
   color: #F2DDB8;
-  font-size: 0.74rem;
-  letter-spacing: 0.24em;
+  /* เป็นข้อความไทยแล้ว จึงไม่ใช้ .stamp ที่กาง letter-spacing จนสระลอยออกจากพยัญชนะ */
+  font-family: var(--body);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
   text-align: center;
   opacity: 0.5;
   animation: saloon-caption 2.2s ease-in-out infinite;
@@ -2081,6 +2083,105 @@ html:has(.story[open]) { overflow: hidden; }
 @keyframes saloon-caption {
   0%, 100% { opacity: 0.45; }
   50%      { opacity: 0.95; }
+}
+
+/* ── รหัสลับที่ได้มาแล้ว (แสดงเตือนในสถานะที่ยังไม่มีรหัสโชว์) ── */
+.earned-code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1.1rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px dashed var(--neon);
+  border-radius: 6px;
+  background: var(--plank-2);
+  text-align: center;
+}
+.earned-code-label { font-size: 0.68rem; color: var(--muted); }
+.earned-code code {
+  font-family: var(--tech);
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  color: var(--neon);
+  overflow-wrap: anywhere;
+}
+.earned-code small { font-size: 0.72rem; line-height: 1.6; color: var(--muted); }
+
+/* ============================================================
+   หน้าสถานะ — 404 กับหน้าระบบขัดข้อง
+   ============================================================ */
+.status-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+  background: var(--ground);
+}
+.status-card {
+  max-width: 520px;
+  width: 100%;
+  padding: 2rem 1.75rem 2.25rem;
+  text-align: center;
+}
+.status-kicker { font-size: 0.7rem; color: var(--muted); }
+.status-mascot {
+  display: block;
+  margin: 1rem auto 0.25rem;
+  width: 150px;
+  height: auto;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.35));
+}
+.status-code {
+  margin: 0;
+  font-family: var(--tech);
+  font-size: 3.4rem;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  color: var(--brass);
+}
+.status-title {
+  margin: 0.4rem 0 0.6rem;
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--brass-lit);
+}
+.status-text { margin: 0; font-size: 0.92rem; line-height: 1.85; color: var(--muted); }
+.status-digest {
+  margin: 1rem 0 0;
+  font-family: var(--tech);
+  font-size: 0.76rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.status-action { margin-top: 1.5rem; }
+.status-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+/* ============================================================
+   โครงหน้าระหว่างโหลด
+   ============================================================ */
+.skeleton-page { display: flex; flex-direction: column; gap: 20px; }
+.skeleton-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.skeleton {
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--plank) 0%, var(--plank-2) 50%, var(--plank) 100%);
+  background-size: 200% 100%;
+  border: 1px solid var(--line);
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+.skeleton-title { height: 48px; max-width: 320px; }
+.skeleton-card  { height: 220px; }
+.skeleton-block { height: 300px; }
+@keyframes skeleton-sweep {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

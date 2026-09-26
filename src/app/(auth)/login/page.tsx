@@ -9,7 +9,7 @@ export const metadata = { title: 'เข้าสู่ระบบ' }
 export default function LoginPage() {
   return (
     <main className="login-page">
-      <Image src="/hero-banner.svg" alt="" fill preload unoptimized className="login-bg" />
+      <Image src="/hero-banner.webp" alt="" fill preload sizes="100vw" className="login-bg" />
       <div className="login-shade" aria-hidden="true" />
 
       <div className="login-topbar">

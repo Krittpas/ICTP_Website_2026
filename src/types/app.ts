@@ -50,14 +50,21 @@ export interface BoardSeat {
   solved_at: string | null
 }
 
-/** ผลจาก get_my_puzzle() — สถานะเดียวเท่านั้นที่คืนข้อความโจทย์มา */
+/**
+ * ผลจาก get_my_puzzle() — สถานะเดียวเท่านั้นที่คืนข้อความโจทย์มา
+ *
+ * earned_code = รหัสลับที่เจ้าตัวไขผ่านมาแล้ว ติดตัวไปไม่ว่าจะถูกย้ายไปนั่งที่ไหน (migration 019)
+ * มาด้วยทุกสถานะ เพื่อให้เปิดดูรหัสที่ได้มาแล้วซ้ำได้เสมอ
+ */
 export type MyPuzzle =
-  | { status: 'active'; puzzle_id: number; title: string; prompt: string; hint: string; media_url: string | null; seat_index: number; attempts_left: number }
-  | { status: 'solved'; title: string; prompt: string; secret_code: string; seat_index: number }
-  | { status: 'locked'; current_seat: number; seat_index: number; waiting_on: string }
-  | { status: 'camp_closed'; seat_index: number }
+  | { status: 'active'; puzzle_id: number; title: string; prompt: string; hint: string; media_url: string | null; seat_index: number; attempts_left: number; earned_code: string | null }
+  | { status: 'solved'; title: string; prompt: string; secret_code: string; seat_index: number; earned_code: string | null }
+  | { status: 'locked'; current_seat: number; seat_index: number; waiting_on: string; earned_code: string | null }
+  | { status: 'camp_closed'; seat_index: number; earned_code: string | null }
+  /** พี่ค่ายปิดที่นั่งนี้ไว้ — โซ่ข้ามไปแล้ว ไม่ใช่ "ยังไม่มีโจทย์" */
+  | { status: 'seat_closed'; seat_index: number; earned_code: string | null }
   | { status: 'unassigned' }
-  | { status: 'no_puzzle' }
+  | { status: 'no_puzzle'; earned_code: string | null }
   | { status: 'unauthorized' }
 
 export type AnswerStatus =

@@ -102,7 +102,7 @@ export function ProfileEditor({ user, open, onClose }: { user: SessionUser; open
   return (
     <dialog
       ref={ref}
-      className="confirm profile-dialog"
+      className="confirm"
       aria-labelledby="profile-title"
       onClose={onClose}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}

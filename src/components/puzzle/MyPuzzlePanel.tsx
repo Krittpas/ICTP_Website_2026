@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
-import { Check, Copy, Lock, Maximize2, TriangleAlert } from 'lucide-react'
+import { Check, Copy, DoorClosed, Lock, Maximize2, TriangleAlert } from 'lucide-react'
 import { submitAnswerAction } from '@/actions/puzzle'
 import type { AnswerResult, MyPuzzle } from '@/types/app'
 
@@ -72,15 +72,54 @@ function SecretCode({ code, note }: { code: string; note?: React.ReactNode }) {
   )
 }
 
+/**
+ * รหัสที่เจ้าตัวไขผ่านมาแล้ว (migration 019)
+ *
+ * ผูกกับคน ไม่ใช่ที่นั่ง — ถูกย้ายที่นั่งกี่ครั้งรหัสเดิมก็ยังใช้กับเครื่องถอดรหัสได้
+ * แสดงเฉพาะสถานะที่ยังไม่มีรหัสโชว์อยู่แล้ว จะได้ไม่มีรหัสสองชุดบนจอพร้อมกัน
+ */
+function EarnedCode({ code }: { code: string | null | undefined }) {
+  if (!code) return null
+  return (
+    <div className="earned-code">
+      <span className="stamp earned-code-label">รหัสลับที่คุณได้มาแล้ว</span>
+      <code>{code}</code>
+      <small>ใช้กับเครื่องถอดรหัสได้ตลอด แม้พี่ค่ายจะย้ายที่นั่งให้</small>
+    </div>
+  )
+}
+
 export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle; campOpen: boolean; imageUrl?: string | null }) {
   const [result, setResult] = useState<AnswerResult | null>(null)
   const [pending, start] = useTransition()
 
   if (puzzle.status === 'unassigned' || puzzle.status === 'no_puzzle' || puzzle.status === 'unauthorized') {
     return (
-      <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.8 }}>
-        ยังไม่มีปริศนาสำหรับคุณ รอพี่ค่ายจัดเมืองและใส่โจทย์ก่อนนะ
-      </p>
+      <>
+        <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.8 }}>
+          ยังไม่มีปริศนาสำหรับคุณ รอพี่ค่ายจัดเมืองและใส่โจทย์ก่อนนะ
+        </p>
+        {puzzle.status === 'no_puzzle' && <EarnedCode code={puzzle.earned_code} />}
+      </>
+    )
+  }
+
+  // ── พี่ค่ายปิดที่นั่งนี้ไว้ — โซ่ข้ามไปแล้ว ต้องบอกตรง ๆ ไม่ใช่ปล่อยให้เข้าใจว่ายังไม่มีโจทย์ ──
+  if (puzzle.status === 'seat_closed') {
+    return (
+      <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+        <DoorClosed size={44} className="icon-center" color="var(--ember)" aria-hidden="true" strokeWidth={1.4} />
+        <h2 style={{ fontFamily: 'var(--display)', fontSize: '1.25rem', color: 'var(--ember)', margin: '0.8rem 0 0.5rem' }}>
+          ที่นั่งของคุณถูกปิดไว้
+        </h2>
+        <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.8, color: 'var(--muted)' }}>
+          พี่ค่ายปิดที่นั่งคาวบอย #{puzzle.seat_index} ไว้ โซ่ของเมืองจึงข้ามไปคนถัดไปแล้ว<br />
+          {puzzle.earned_code
+            ? 'รหัสลับที่คุณได้มาก่อนหน้านี้ยังใช้กับเครื่องถอดรหัสได้ตามปกติ'
+            : 'ถ้าคุณยังอยู่ในค่ายและอยากได้รหัสลับ ทักพี่ค่ายได้เลย'}
+        </p>
+        <EarnedCode code={puzzle.earned_code} />
+      </div>
     )
   }
 
@@ -96,6 +135,7 @@ export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle
           คุณคือคาวบอย #{puzzle.seat_index}<br />
           โจทย์จะโผล่ขึ้นมาเองเมื่อพี่ค่ายเปิดระบบและถึงตาคุณ
         </p>
+        <EarnedCode code={puzzle.earned_code} />
       </div>
     )
   }
@@ -122,6 +162,7 @@ export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle
             โจทย์ของคุณจะโผล่ขึ้นมาเองโดยไม่ต้องรีเฟรช
           </p>
         )}
+        <EarnedCode code={puzzle.earned_code} />
       </div>
     )
   }
@@ -222,6 +263,9 @@ export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle
           {MESSAGES[shown.status] ?? 'ลองใหม่อีกครั้ง'}
         </p>
       )}
+
+      {/* ถูกย้ายมานั่งที่นั่งใหม่ = มีโจทย์ใหม่ให้ทำ แต่รหัสเดิมที่ได้มายังใช้ได้อยู่ */}
+      <EarnedCode code={puzzle.earned_code} />
     </div>
   )
 }
