@@ -113,7 +113,7 @@ export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle
           ที่นั่งของคุณถูกปิดไว้
         </h2>
         <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.8, color: 'var(--muted)' }}>
-          พี่ค่ายปิดที่นั่งคาวบอย #{puzzle.seat_index} ไว้ โซ่ของเมืองจึงข้ามไปคนถัดไปแล้ว<br />
+          พี่ค่ายปิดที่นั่งหมายเลขประจำตัว #{puzzle.seat_index} ไว้ โซ่ของเมืองจึงข้ามไปคนถัดไปแล้ว<br />
           {puzzle.earned_code
             ? 'รหัสลับที่คุณได้มาก่อนหน้านี้ยังใช้กับเครื่องถอดรหัสได้ตามปกติ'
             : 'ถ้าคุณยังอยู่ในค่ายและอยากได้รหัสลับ ทักพี่ค่ายได้เลย'}
@@ -132,7 +132,7 @@ export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle
           ค่ายยังไม่เปิด
         </h2>
         <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.8, color: 'var(--muted)' }}>
-          คุณคือคาวบอย #{puzzle.seat_index}<br />
+          คุณคือหมายเลขประจำตัว #{puzzle.seat_index}<br />
           โจทย์จะโผล่ขึ้นมาเองเมื่อพี่ค่ายเปิดระบบและถึงตาคุณ
         </p>
         <EarnedCode code={puzzle.earned_code} />
@@ -149,8 +149,8 @@ export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle
           ประตูยังปิดอยู่
         </h2>
         <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.8, color: 'var(--muted)' }}>
-          คำสาปโซ่ตรวนคลายมาถึงคาวบอย #{puzzle.current_seat}<br />
-          คุณคือคาวบอย #{puzzle.seat_index}
+          คำสาปโซ่ตรวนคลายมาถึงหมายเลขประจำตัว #{puzzle.current_seat}<br />
+          คุณคือหมายเลขประจำตัว #{puzzle.seat_index}
         </p>
         {puzzle.waiting_on && (
           <p style={{
@@ -215,7 +215,7 @@ export function MyPuzzlePanel({ puzzle, campOpen, imageUrl }: { puzzle: MyPuzzle
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
         <span className="stamp" style={{ fontSize: '0.72rem', color: 'var(--brass-lit)' }}>
-          คาวบอย #{puzzle.seat_index} · ถึงตาคุณ
+          หมายเลขประจำตัว #{puzzle.seat_index} · ถึงตาคุณ
         </span>
         <span style={{ fontFamily: 'var(--tech)', fontSize: '0.72rem', color: 'var(--muted)' }}>
           เหลือ {Math.max(0, attemptsLeft)} ครั้งใน 10 นาที

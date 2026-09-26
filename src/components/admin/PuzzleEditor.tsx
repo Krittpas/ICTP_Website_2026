@@ -24,7 +24,7 @@ const BLANK = { title: '', prompt: '', hint: '' }
 /**
  * แก้ปริศนารายข้อ
  *
- * เลือกเมือง/คาวบอยแล้วดึงปริศนาเดิมมาเติมให้ แก้ช่องไหนก็ได้โดยช่องอื่นไม่หาย
+ * เลือกเมือง/หมายเลขประจำตัวแล้วดึงปริศนาเดิมมาเติมให้ แก้ช่องไหนก็ได้โดยช่องอื่นไม่หาย
  * เฉลยถูกแฮชในฐานข้อมูลและไม่เคยถูกอ่านกลับมา — ช่องเฉลยว่างเสมอ เว้นว่าง = ไม่เปลี่ยน
  * รูปโจทย์อยู่ในที่เก็บส่วนตัว น้องเห็นได้เฉพาะเมื่อถึงตาตัวเอง (migration 012)
  */
@@ -144,7 +144,7 @@ export function PuzzleEditor({ cities }: { cities: City[] }) {
     const closing = loaded.isActive
     const ok = await confirm(closing
       ? {
-          tone: 'danger', title: `ปิดที่นั่งคาวบอย #${seat}?`, confirmLabel: 'ปิดที่นั่ง',
+          tone: 'danger', title: `ปิดที่นั่งหมายเลขประจำตัว #${seat}?`, confirmLabel: 'ปิดที่นั่ง',
           message: <>โซ่จะข้ามที่นั่งนี้ไปคนถัดไปทันที และปริศนาข้อนี้จะไม่ถูกนับในจำนวนทั้งค่าย<br />
             {loaded.owner
               ? <><strong>{loaded.owner}</strong> นั่งอยู่ที่นี่ — จะไม่เห็นปริศนาอีก
@@ -154,7 +154,7 @@ export function PuzzleEditor({ cities }: { cities: City[] }) {
               : 'ที่นั่งนี้ยังไม่มีใครนั่ง — ปิดได้เลย'}</>,
         }
       : {
-          title: `เปิดที่นั่งคาวบอย #${seat} กลับ?`, confirmLabel: 'เปิดที่นั่ง',
+          title: `เปิดที่นั่งหมายเลขประจำตัว #${seat} กลับ?`, confirmLabel: 'เปิดที่นั่ง',
           message: 'โซ่จะวนกลับมาหยุดที่ที่นั่งนี้ ถ้ายังไม่มีใครไขผ่าน',
         })
     if (!ok) return
@@ -188,17 +188,17 @@ export function PuzzleEditor({ cities }: { cities: City[] }) {
             </select>
           </div>
           <div style={{ width: 150 }}>
-            <label htmlFor="pe-seat" className="label">คาวบอย</label>
+            <label htmlFor="pe-seat" className="label">หมายเลขประจำตัว</label>
             <select id="pe-seat" name="seat_index" className="field" value={seat} onChange={e => setSeat(Number(e.target.value))}>
-              {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>คาวบอย #{n}</option>)}
+              {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>หมายเลขประจำตัว #{n}</option>)}
             </select>
           </div>
         </div>
 
         <p role="status" style={{ margin: 0, fontSize: '0.84rem', color: loadError ? 'var(--ember)' : 'var(--muted)' }}>
           {loadError ?? (!loaded ? 'กำลังโหลดปริศนาเดิม…'
-            : !loaded.exists ? 'ยังไม่มีปริศนาของคาวบอยคนนี้ — กรอกเพื่อสร้างใหม่ (ต้องใส่เฉลย)'
-            : loaded.isSolved ? 'แก้ปริศนาเดิม · ⚠ คาวบอยคนนี้ไขผ่านไปแล้ว'
+            : !loaded.exists ? 'ยังไม่มีปริศนาของคนที่ถือหมายเลขประจำตัวนี้ — กรอกเพื่อสร้างใหม่ (ต้องใส่เฉลย)'
+            : loaded.isSolved ? 'แก้ปริศนาเดิม · ⚠ คนที่ถือหมายเลขประจำตัวนี้ไขผ่านไปแล้ว'
             : 'แก้ปริศนาเดิม · เปลี่ยนเฉพาะช่องที่ต้องการได้เลย')}
         </p>
 
@@ -335,7 +335,7 @@ export function PuzzleEditor({ cities }: { cities: City[] }) {
           {codeMode === 'regenerate' && loaded?.isSolved && (
             <p role="alert" className="secret-code-warn">
               <TriangleAlert size={15} aria-hidden="true" style={{ flexShrink: 0 }} />
-              คาวบอยคนนี้ไขผ่านและจดรหัสเดิมไปแล้ว — เปลี่ยนรหัสตอนนี้แปลว่ารหัสที่น้องถืออยู่ใช้ไม่ได้อีก
+              คนที่ถือหมายเลขประจำตัวนี้ไขผ่านและจดรหัสเดิมไปแล้ว — เปลี่ยนรหัสตอนนี้แปลว่ารหัสที่น้องถืออยู่ใช้ไม่ได้อีก
               ต้องแจ้งรหัสใหม่ให้น้องเอง
             </p>
           )}

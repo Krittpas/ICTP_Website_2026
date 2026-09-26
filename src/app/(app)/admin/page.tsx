@@ -13,6 +13,7 @@ import { StudentBulkCreator } from '@/components/admin/StudentBulkCreator'
 import { MoveStudentPanel } from '@/components/admin/MoveStudentPanel'
 import { ReadinessPanel } from '@/components/admin/ReadinessPanel'
 import { CityStatusPanel } from '@/components/admin/CityStatusPanel'
+import { DeputyRankPanel, type DeputyRow } from '@/components/admin/DeputyRankPanel'
 import { AdminTabs, type AdminSection } from '@/components/admin/AdminTabs'
 import { countBlockers } from '@/lib/admin/readiness'
 import type { AuditEntry, City, CityProgress, CityStatus, ReadinessReport, Senior, SeniorMatchRow } from '@/types/app'
@@ -29,11 +30,13 @@ export default async function AdminPage() {
   const [
     { data: cities }, { data: progress }, { data: audit }, { data: studentRows },
     { data: matchData }, { data: seniorData }, { data: readyData }, { data: cityStatus },
+    { data: deputyData },
   ] = await Promise.all([
     supabase.from('cities').select('*').order('id'),
     supabase.from('city_progress').select('city_id, current_seat, solved_count, last_solved_at').order('city_id'),
     supabase.from('admin_audit').select('id, action, payload, reason, created_at').order('created_at', { ascending: false }).limit(12),
-    supabase.from('profiles').select('email, display_name, nickname, city_id, seat_index').eq('role', 'student')
+    supabase.from('profiles').select('email, display_name, nickname, city_id, seat_index, cowhand, grade')
+      .eq('role', 'student')
       .order('city_id', { nullsFirst: false }).order('seat_index').order('email'),
     // ต้องรัน migration 010 ก่อน ไม่อย่างนั้นได้ null และซ่อนส่วนนี้ไว้
     supabase.rpc('admin_list_senior_matches'),
@@ -42,13 +45,20 @@ export default async function AdminPage() {
     // ตรวจความพร้อม + สถานะรายเมือง — ต้องรัน migration 017 ก่อน ไม่งั้นได้ null แล้วซ่อนไว้
     supabase.rpc('admin_readiness'),
     supabase.rpc('admin_city_status'),
+    // ยศพี่ค่าย — ต้องรัน migration 020 ก่อน ไม่งั้นได้ null แล้วซ่อนแผงไว้
+    supabase.rpc('admin_list_deputies'),
   ])
 
   const townList = (cities ?? []) as City[]
   const rows = (progress ?? []) as CityProgress[]
   const solved = rows.reduce((s, r) => s + r.solved_count, 0)
   const { total } = await getPuzzleTotals(townList.map(c => c.id))
-  const students = (studentRows ?? []) as StudentRow[]
+  // cowhand/grade มาจาก migration 020 — ยังไม่ได้รันแล้ว PostgREST ตอบ error ทั้งคำขอ
+  // ถอยไปถามเฉพาะช่องเดิม ไม่อย่างนั้นรายชื่อน้องหายทั้งแผง
+  const students = ((studentRows ?? (await supabase
+    .from('profiles').select('email, display_name, nickname, city_id, seat_index')
+    .eq('role', 'student')
+    .order('city_id', { nullsFirst: false }).order('seat_index').order('email')).data) ?? []) as StudentRow[]
   const ready = (readyData as ReadinessReport | null)?.status === 'ok' ? readyData as ReadinessReport : null
 
 
@@ -86,7 +96,7 @@ export default async function AdminPage() {
     {
       id: 'students',
       label: 'น้องค่าย',
-      blurb: 'สร้างบัญชี ตั้งชื่อ ออกรหัสผ่านใหม่ และย้ายน้องระหว่างเมือง',
+      blurb: 'สร้างบัญชี ตั้งชื่อและฉายา ออกรหัสผ่านใหม่ ย้ายน้องระหว่างเมือง และตั้งยศพี่ค่าย',
       content: (
         <>
           <div className="admin-grid">
@@ -95,6 +105,9 @@ export default async function AdminPage() {
           </div>
           <StudentBulkCreator />
           <StudentNamesPanel students={students} />
+          {Array.isArray(deputyData)
+            ? <DeputyRankPanel deputies={deputyData as DeputyRow[]} />
+            : <p className="panel admin-empty">ส่วนยศพี่ค่ายต้องรัน migration 020 ก่อน</p>}
         </>
       ),
     },

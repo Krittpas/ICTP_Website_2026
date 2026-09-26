@@ -8,7 +8,7 @@ import type { City } from '@/types/app'
 import type { StudentRow } from './StudentNamesPanel'
 
 const seatLabel = (city: number | null, seat: number | null) =>
-  city && seat ? `เมือง ${String(city).padStart(2, '0')} · คาวบอย #${seat}` : 'ยังไม่มีที่นั่ง'
+  city && seat ? `เมือง ${String(city).padStart(2, '0')} · หมายเลขประจำตัว #${seat}` : 'ยังไม่มีที่นั่ง'
 
 /**
  * ย้ายน้องรายคน (migration 017)
@@ -43,7 +43,7 @@ export function MoveStudentPanel({ students, cities }: { students: StudentRow[];
 
     const name = who?.display_name || email.trim()
     const ok = await confirm({
-      title: `ย้าย ${name} ไปเมือง ${String(Number(cityId)).padStart(2, '0')} คาวบอย #${seat}?`,
+      title: `ย้าย ${name} ไปเมือง ${String(Number(cityId)).padStart(2, '0')} หมายเลขประจำตัว #${seat}?`,
       confirmLabel: 'ย้าย',
       message: target
         ? <>ที่นั่งนี้มี <strong>{target.display_name || target.email}</strong> อยู่ — ทั้งสองคนจะ<strong>สลับที่กัน</strong>
@@ -107,7 +107,7 @@ export function MoveStudentPanel({ students, cities }: { students: StudentRow[];
           <label htmlFor="mv-seat" className="label">ที่นั่ง</label>
           <select id="mv-seat" className="field" value={seat} onChange={e => setSeat(e.target.value)}>
             <option value="">— เลือก —</option>
-            {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>คาวบอย #{n}</option>)}
+            {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>หมายเลขประจำตัว #{n}</option>)}
           </select>
         </div>
       </div>

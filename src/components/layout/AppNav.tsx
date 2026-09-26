@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { LogOut, MapPin, UserPen } from 'lucide-react'
+import { BookUser, LogOut, MapPin } from 'lucide-react'
 import { logoutAction } from '@/actions/auth'
 import { NavShell, type NavItem } from './NavShell'
 import { Avatar } from './Avatar'
-import { ProfileEditor } from './ProfileEditor'
+import { ProfilePassport } from './ProfilePassport'
+import { campTitle } from '@/lib/profile/titles'
 import type { SessionUser } from '@/types/app'
 
 export function AppNav({ user, decryptUnlocked }: { user: SessionUser; decryptUnlocked: boolean }) {
@@ -21,7 +22,7 @@ export function AppNav({ user, decryptUnlocked }: { user: SessionUser; decryptUn
 
 function ProfileMenu({ user }: { user: SessionUser }) {
   const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState(false)
+  const [viewing, setViewing] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const name = user.nickname || user.displayName || user.email
 
@@ -76,16 +77,21 @@ function ProfileMenu({ user }: { user: SessionUser }) {
             borderRadius: 10, background: 'var(--plank-2)', fontSize: '0.88rem',
           }}>
             <MapPin size={15} color="var(--brass)" aria-hidden="true" />
-            {user.role === 'admin'
-              ? 'พี่ค่าย · ดูแลทุกเมือง'
-              : user.cityId && user.seatIndex
-                ? `เมือง ${user.cityId} · คาวบอย #${user.seatIndex}`
-                : 'ยังไม่ถูกจัดลงเมือง'}
+            <span>
+              {/* ฉายาขึ้นก่อนเสมอ: พี่ค่ายได้ยศ น้องได้คาวบอย/คาวเกิร์ล#รุ่น (migration 020) */}
+              <strong style={{ color: 'var(--brass-lit)' }}>{campTitle(user)}</strong>
+              {' · '}
+              {user.role === 'admin'
+                ? 'ดูแลทุกเมือง'
+                : user.cityId && user.seatIndex
+                  ? `เมือง ${user.cityId} · หมายเลขประจำตัว #${user.seatIndex}`
+                  : 'ยังไม่ถูกจัดลงเมือง'}
+            </span>
           </div>
 
           <button type="button" className="btn-ghost" style={{ width: '100%', borderRadius: 10 }}
-                  onClick={() => { setOpen(false); setEditing(true) }}>
-            <UserPen size={15} aria-hidden="true" /> แก้ไขโปรไฟล์
+                  onClick={() => { setOpen(false); setViewing(true) }}>
+            <BookUser size={15} aria-hidden="true" /> ดูโปรไฟล์
           </button>
 
           <form action={logoutAction}>
@@ -96,7 +102,7 @@ function ProfileMenu({ user }: { user: SessionUser }) {
         </div>
       )}
 
-      <ProfileEditor user={user} open={editing} onClose={() => setEditing(false)} />
+      <ProfilePassport user={user} open={viewing} onClose={() => setViewing(false)} />
     </div>
   )
 }

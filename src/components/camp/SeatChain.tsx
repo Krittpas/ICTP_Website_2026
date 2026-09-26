@@ -1,4 +1,5 @@
 import { Check, Lock } from 'lucide-react'
+import { cowhandTitleByGeneration } from '@/lib/profile/titles'
 import type { BoardSeat } from '@/types/app'
 
 const COLORS = {
@@ -30,8 +31,14 @@ export function SeatChain({ seats, mySeat }: { seats: BoardSeat[]; mySeat?: numb
             <span className="stamp" style={{ fontSize: '0.76rem', color: COLORS[seat.status], width: 52 }}>
               #{seat.seat_index}
             </span>
-            <span style={{ flexGrow: 1, fontSize: '0.9rem', color: isMe ? 'var(--brass-lit)' : 'var(--text)' }}>
+            <span style={{ flexGrow: 1, minWidth: 0, fontSize: '0.9rem', color: isMe ? 'var(--brass-lit)' : 'var(--text)' }}>
               {seat.display_name}{isMe && ' (คุณ)'}
+              {/* ฉายาของเจ้าของที่นั่ง — ที่นั่งว่างหรือยังไม่ได้ตั้งฉายาจะไม่ขึ้นบรรทัดนี้เลย */}
+              {seat.cowhand && (
+                <span style={{ display: 'block', fontFamily: 'var(--tech)', fontSize: '0.72rem', color: 'var(--muted)' }}>
+                  {cowhandTitleByGeneration(seat.cowhand, seat.generation)}
+                </span>
+              )}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.75rem', color: COLORS[seat.status] }}>
               {seat.status === 'solved' && <Check size={13} aria-hidden="true" />}

@@ -58,7 +58,7 @@ async function LockedDoor() {
         </h1>
         <p style={{ margin: '0 0 1.6rem', fontSize: '0.92rem', lineHeight: 1.85, color: 'var(--muted)' }}>
           รวมชิ้นส่วนกุญแจทองคำจากทั้ง 6 เมืองให้ครบ ประตูจะเปิดเอง<br />
-          แต่ละเมืองได้กุญแจหนึ่งชิ้นเมื่อคาวบอยทั้ง 6 คนไขปริศนาครบ
+          แต่ละเมืองได้กุญแจหนึ่งชิ้นเมื่อทั้ง 6 คนในเมืองไขปริศนาครบ
         </p>
         <div style={{ textAlign: 'left' }}>
           <GoldenKeys keys={keys} />

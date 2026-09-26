@@ -8,6 +8,7 @@ import { getActionAdmin } from '@/lib/auth/dal'
 import { isStudentEmail, normalizeEmail } from '@/lib/auth/email'
 import { STORAGE_KEY } from '@/lib/storage'
 import { NAME_RULE, THAI_FULL_NAME, THAI_NICKNAME, tidyName } from '@/lib/profile/names'
+import { TITLE_RULE } from '@/lib/profile/titles'
 import { PUZZLE_BUCKET } from '@/lib/puzzles/media'
 import type { PuzzleForEdit } from '@/lib/puzzles/edit'
 import type { ReadinessReport } from '@/types/app'
@@ -49,6 +50,9 @@ async function callRpc(fn: string, args: Record<string, unknown>): Promise<Resul
   if (status === 'student_not_found') return { error: 'ไม่พบบัญชีน้องค่ายอีเมลนี้' }
   if (status === 'not_a_student')   return { error: 'ออกรหัสผ่านใหม่ได้เฉพาะบัญชีน้องค่าย' }
   if (status === 'invalid_names')   return { error: `บรรทัดที่ ${(rows ?? []).join(', ')} ไม่ถูกต้อง — ${NAME_RULE} (ไม่ได้บันทึกสักแถว)` }
+  if (status === 'invalid_titles')  return { error: `บรรทัดที่ ${(rows ?? []).join(', ')} ไม่ถูกต้อง — ${TITLE_RULE} (ไม่ได้บันทึกสักแถว)` }
+  if (status === 'invalid_rank')    return { error: 'ยศไม่ถูกต้อง' }
+  if (status === 'admin_not_found') return { error: 'ไม่พบบัญชีพี่ค่ายอีเมลนี้' }
   if (status === 'unknown_students') return { error: `บรรทัดที่ ${(rows ?? []).join(', ')} ไม่พบบัญชีน้องค่ายอีเมลนี้ (ไม่ได้บันทึกสักแถว)` }
   if (status === 'invalid_rows')    return {
     error: `บรรทัดที่ ${(rows ?? []).join(', ')} ไม่ถูกต้อง — อีเมลต้องเป็น sXXXXX@bj.ac.th และต้องมีชื่อพี่ (ไม่ได้บันทึกสักแถว)`,
@@ -204,7 +208,7 @@ export async function moveStudentAction(
   const kicked = res.data?.swapped_to_none === true
   const solved = res.data?.seat_solved === true
 
-  const parts = [cityId ? `ย้ายไปเมือง ${String(cityId).padStart(2, '0')} · คาวบอย #${seat}` : 'เอาออกจากที่นั่งแล้ว']
+  const parts = [cityId ? `ย้ายไปเมือง ${String(cityId).padStart(2, '0')} · หมายเลขประจำตัว #${seat}` : 'เอาออกจากที่นั่งแล้ว']
   if (swapped) parts.push(kicked ? `${swapped} หลุดจากที่นั่งนี้ ต้องจัดที่ให้ใหม่` : `สลับที่กับ ${swapped}`)
   if (solved) parts.push('ที่นั่งนี้ถูกไขผ่านไปแล้ว น้องจะเห็นรหัสลับของที่นั่งนี้ทันที')
   return { ok: true, message: parts.join(' · ') }
@@ -288,25 +292,57 @@ export async function upsertSeniorMatchesAction(_p: Result | null, formData: For
   return res.ok ? { ok: true, message: `จับคู่แล้ว ${rows.length} คน` } : res
 }
 
+/** แถวที่วางมาในแผงรายชื่อน้อง — ห้าช่องคงที่ ไม่มีช่องยาวท้ายเหมือนคำใบ้พี่รหัส */
+function parseTitleRows(text: string) {
+  return parsePastedRows(text).map(({ line, cells }) => ({
+    line,
+    email: (cells[0] ?? '').trim(),
+    name: tidyName(cells[1] ?? ''),
+    nickname: tidyName(cells[2] ?? ''),
+    cowhand: parseCowhand(cells[3] ?? ''),
+    grade: parseGrade(cells[4] ?? ''),
+  }))
+}
+
 function parseSeniorRows(text: string) {
   return parsePastedRows(text).map(({ line, cells, rest }) => ({
     line, email: cells[0] ?? '', name: cells[1] ?? '', nickname: cells[2] ?? '', clue: rest,
   }))
 }
 
+/** แปลงคำที่พี่ค่ายพิมพ์ในสเปรดชีตเป็นค่าที่ฐานข้อมูลรับ — ว่าง = ไม่เปลี่ยนของเดิม */
+function parseCowhand(raw: string): string {
+  const v = raw.trim().toLowerCase()
+  if (!v) return ''
+  if (v === 'cowboy'  || v === 'ชาย' || v === 'คาวบอย'   || v === 'ช' || v === 'm') return 'cowboy'
+  if (v === 'cowgirl' || v === 'หญิง' || v === 'คาวเกิร์ล' || v === 'ญ' || v === 'f') return 'cowgirl'
+  // ค่าที่แปลไม่ออกส่งดิบไปให้ฐานข้อมูลปฏิเสธ จะได้บอกบรรทัดที่ผิดได้ ไม่ใช่เงียบ ๆ ข้ามไป
+  return v
+}
+
+/** ชั้นเรียนรับได้ทั้ง "5" และ "ม.5" — ว่าง = ไม่เปลี่ยนของเดิม */
+function parseGrade(raw: string): string {
+  const v = raw.trim().replace(/^ม\.?\s*/, '')
+  return v
+}
+
 /**
- * ตั้งชื่อ-นามสกุลและชื่อเล่นของน้อง — น้องแก้เองไม่ได้ (migration 014)
- * ช่องวาง: หนึ่งบรรทัดต่อหนึ่งคน · อีเมลน้อง | ชื่อ-นามสกุล | ชื่อเล่น (แท็บหรือจุลภาค)
+ * ตั้งชื่อ-นามสกุล ชื่อเล่น และฉายาของน้อง — น้องแก้เองไม่ได้ (migration 014 · 020)
+ * ช่องวาง: หนึ่งบรรทัดต่อหนึ่งคน
+ *   อีเมลน้อง | ชื่อ-นามสกุล | ชื่อเล่น | คาวบอย/คาวเกิร์ล | ชั้น ม. (แท็บหรือจุลภาค)
+ * สองช่องท้ายเป็นช่องเสริม เว้นไว้ = ฉายาเดิมไม่ถูกแตะ
  */
 export async function setStudentNamesAction(_p: Result | null, formData: FormData): Promise<Result> {
   const bulk = String(formData.get('bulk') ?? '')
   const rows = bulk.trim()
-    ? parseSeniorRows(bulk).map(({ line, email, name, nickname }) => ({ line, email, name: tidyName(name), nickname: tidyName(nickname) }))
+    ? parseTitleRows(bulk)
     : [{
         line: 1,
         email: String(formData.get('email') ?? '').trim(),
         name: tidyName(String(formData.get('name') ?? '')),
         nickname: tidyName(String(formData.get('nickname') ?? '')),
+        cowhand: parseCowhand(String(formData.get('cowhand') ?? '')),
+        grade: parseGrade(String(formData.get('grade') ?? '')),
       }]
 
   // ตรวจก่อนส่ง ให้บอกบรรทัดที่ผิดได้ทันที — ฐานข้อมูลตรวจซ้ำอีกชั้น
@@ -315,9 +351,34 @@ export async function setStudentNamesAction(_p: Result | null, formData: FormDat
     return { error: bulk.trim() ? `บรรทัดที่ ${bad.map(r => r.line).join(', ')} ไม่ถูกต้อง — ${NAME_RULE}` : NAME_RULE }
   }
 
+  // ฉายาเป็นช่องเสริม แต่ถ้าใส่มาต้องถูกต้อง — ฐานข้อมูลตรวจซ้ำอีกชั้น
+  const badTitle = rows.filter(r =>
+    (r.cowhand && r.cowhand !== 'cowboy' && r.cowhand !== 'cowgirl') ||
+    (r.grade && !/^[456]$/.test(r.grade)))
+  if (badTitle.length) {
+    return {
+      error: bulk.trim()
+        ? `บรรทัดที่ ${badTitle.map(r => r.line).join(', ')} ไม่ถูกต้อง — ${TITLE_RULE}`
+        : TITLE_RULE,
+    }
+  }
+
   const res = await callRpc('admin_set_student_names', { p_rows: rows })
   if (res.ok) revalidatePath('/', 'layout')
-  return res.ok ? { ok: true, message: `บันทึกชื่อแล้ว ${rows.length} คน` } : res
+  return res.ok ? { ok: true, message: `บันทึกแล้ว ${rows.length} คน` } : res
+}
+
+/**
+ * ตั้งยศให้พี่ค่าย — นายอำเภอหรือผู้พิทักษ์ (migration 020)
+ * ฟังก์ชันนี้ไม่ได้แจกสิทธิ์ admin ให้ใคร ตั้งได้เฉพาะบัญชีที่เป็น admin อยู่แล้ว
+ */
+export async function setDeputyRankAction(email: string, rank: string): Promise<Result> {
+  const res = await callRpc('admin_set_deputy_rank', {
+    p_email: normalizeEmail(email),
+    p_rank: rank.trim(),
+  })
+  if (res.ok) revalidatePath('/', 'layout')
+  return res
 }
 
 export async function deleteSeniorMatchAction(email: string) {

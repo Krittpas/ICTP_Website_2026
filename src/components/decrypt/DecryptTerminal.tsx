@@ -62,7 +62,7 @@ export function DecryptTerminal({ initial }: { initial: SeniorReveal }) {
             background: 'var(--plank-2)', borderLeft: '3px solid var(--neon)',
             fontSize: '0.95rem', lineHeight: 1.85,
           }}>
-            ประตูเปิดแล้ว คาวบอยทั้งหลาย<br />
+            ประตูเปิดแล้ว ชาวเมืองทั้งหลาย<br />
             นำ <strong style={{ color: 'var(--brass-lit)' }}>รหัสลับประจำตัว</strong> ที่ได้จากปริศนาของคุณมาใส่เครื่อง
             เพื่อปลดล็อคเบาะแสและเผยตัวตนของพี่รหัส
           </p>

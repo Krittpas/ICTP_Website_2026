@@ -44,7 +44,7 @@ src/
 ├ lib/                     supabase · auth (DAL) · camp state
 └ types/app.ts
 public/                    hero-banner.webp · territory-map.webp · mascot-*.webp · logo-ictp.webp · gallery/
-supabase/migrations/       001 → 019
+supabase/migrations/       001 → 020
 ```
 
 ## หลักความปลอดภัย 5 ข้อ

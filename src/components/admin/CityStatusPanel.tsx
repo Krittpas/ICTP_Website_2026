@@ -47,8 +47,8 @@ export function CityStatusPanel({ rows }: { rows: CityStatus[] }) {
                 {city.done
                   ? <><CircleCheck size={15} aria-hidden="true" /> ไขครบทั้งเมืองแล้ว</>
                   : !city.waiting_seated
-                    ? <><UserX size={15} aria-hidden="true" /> คาวบอย #{city.current_seat} ไม่มีคนนั่ง — โซ่ค้างถาวร</>
-                    : <>รอ <strong>{city.waiting_name || city.waiting_email}</strong> · คาวบอย #{city.current_seat}</>}
+                    ? <><UserX size={15} aria-hidden="true" /> หมายเลขประจำตัว #{city.current_seat} ไม่มีคนนั่ง — โซ่ค้างถาวร</>
+                    : <>รอ <strong>{city.waiting_name || city.waiting_email}</strong> · หมายเลขประจำตัว #{city.current_seat}</>}
               </span>
 
               <span className="stuck-time">

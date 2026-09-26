@@ -24,7 +24,7 @@ export function ForceSolvePanel({ cities }: { cities: City[] }) {
     if (!reason.trim()) { setMsg({ text: 'กรุณาระบุเหตุผล', bad: true }); return }
     const city = cities.find(c => c.id === cityId)
     const ok = await confirm({
-      title: `ปลดคาวบอย #${seat} ของ ${city?.name_en ?? `เมือง ${cityId}`}?`,
+      title: `ปลดหมายเลขประจำตัว #${seat} ของ ${city?.name_en ?? `เมือง ${cityId}`}?`,
       message: <>ที่นั่งนี้จะถูกนับว่าผ่านแล้ว และคนถัดไปในเมืองเริ่มตอบได้ทันที ย้อนกลับไม่ได้<br />เหตุผล: <strong>{reason.trim()}</strong></>,
       confirmLabel: 'ปลดที่นั่ง',
     })

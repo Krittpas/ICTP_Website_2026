@@ -1,4 +1,5 @@
 import type { Attachment } from '@/lib/announcements/attachments'
+import type { Cowhand, DeputyRank } from '@/lib/profile/titles'
 
 export type UserRole = 'student' | 'admin'
 
@@ -14,6 +15,14 @@ export interface SessionUser {
   role: UserRole
   cityId: number | null
   seatIndex: number | null
+  /** คาวบอย/คาวเกิร์ล — พี่ค่ายเป็นคนตั้ง (migration 020) */
+  cowhand: Cowhand | null
+  /** ชั้น ม.4–6 · เลขรุ่นคำนวณจากตรงนี้ ไม่ได้เก็บแยก */
+  grade: number | null
+  /** ยศของพี่ค่าย — น้องค่ายเป็น null เสมอ */
+  deputyRank: DeputyRank | null
+  /** วันที่สร้างบัญชี — ใช้เป็น "วันออกหนังสือ" ในหน้าโปรไฟล์ */
+  createdAt: string | null
 }
 
 export interface CampState {
@@ -48,6 +57,10 @@ export interface BoardSeat {
   display_name: string
   status: SeatStatus
   solved_at: string | null
+  /** ฉายาของเจ้าของที่นั่ง — null ถ้าที่นั่งว่างหรือพี่ค่ายยังไม่ได้ตั้งให้ (migration 020) */
+  cowhand: string | null
+  /** เลขรุ่นที่ฐานข้อมูลคำนวณมาให้แล้ว */
+  generation: number | null
 }
 
 /**

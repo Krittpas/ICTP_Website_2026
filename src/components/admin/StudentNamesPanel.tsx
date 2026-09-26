@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState, useTransition } from 'react'
 import { Check, Copy, KeyRound, Pencil } from 'lucide-react'
 import { resetStudentPasswordAction, setStudentNamesAction } from '@/actions/admin'
 import { NAME_RULE, THAI_FULL_NAME, THAI_NICKNAME } from '@/lib/profile/names'
+import { COWHAND_LABEL, GRADES, cowhandTitle, generationOf, isCowhand } from '@/lib/profile/titles'
 import { useConfirm } from '@/components/layout/ConfirmDialog'
 
 type State = { ok?: true; error?: string; message?: string } | null
@@ -14,9 +15,13 @@ export interface StudentRow {
   nickname: string
   city_id: number | null
   seat_index: number | null
+  /** คาวบอย/คาวเกิร์ล — ยังไม่ได้ตั้งเป็น null (migration 020) */
+  cowhand: string | null
+  /** ชั้น ม.4–6 · เลขรุ่นคำนวณจากตรงนี้ */
+  grade: number | null
 }
 
-const EMPTY = { email: '', name: '', nickname: '' }
+const EMPTY = { email: '', name: '', nickname: '', cowhand: '', grade: '' }
 
 /**
  * รายชื่อน้องค่าย — ชื่อ-นามสกุลและชื่อเล่นภาษาไทย ตั้งโดยพี่ค่ายเท่านั้น
@@ -62,7 +67,9 @@ export function StudentNamesPanel({ students }: { students: StudentRow[] }) {
     }
   }
 
-  const needsFix = (s: StudentRow) => !THAI_FULL_NAME.test(s.display_name) || !THAI_NICKNAME.test(s.nickname)
+  const needsFix = (s: StudentRow) =>
+    !THAI_FULL_NAME.test(s.display_name) || !THAI_NICKNAME.test(s.nickname)
+    || !isCowhand(s.cowhand) || !generationOf(s.grade)
   const pending = students.filter(needsFix).length
   const set = (k: keyof typeof EMPTY) => (e: { target: { value: string } }) => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -71,6 +78,8 @@ export function StudentNamesPanel({ students }: { students: StudentRow[] }) {
       email: s.email,
       name: THAI_FULL_NAME.test(s.display_name) ? s.display_name : '',
       nickname: THAI_NICKNAME.test(s.nickname) ? s.nickname : '',
+      cowhand: isCowhand(s.cowhand) ? s.cowhand : '',
+      grade: s.grade ? String(s.grade) : '',
     })
     document.getElementById('sn-name')?.focus()
   }
@@ -80,12 +89,13 @@ export function StudentNamesPanel({ students }: { students: StudentRow[] }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'baseline' }}>
         <span className="stamp" style={{ fontSize: '0.72rem', color: 'var(--neon)' }}>รายชื่อน้องค่าย</span>
         <span style={{ fontFamily: 'var(--tech)', fontSize: '0.8rem', color: pending ? 'var(--ember)' : 'var(--muted)' }}>
-          {students.length} คน{pending ? ` · ต้องแก้ชื่อ ${pending} คน` : ' · ชื่อครบทุกคน'}
+          {students.length} คน{pending ? ` · ยังไม่ครบ ${pending} คน` : ' · ชื่อและฉายาครบทุกคน'}
         </span>
       </div>
 
       <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--muted)', lineHeight: 1.7 }}>
-        น้องแก้ชื่อเองไม่ได้ เปลี่ยนได้แค่รูปโปรไฟล์ · {NAME_RULE}
+        น้องแก้ชื่อและฉายาเองไม่ได้ เปลี่ยนได้แค่รูปโปรไฟล์ · {NAME_RULE}<br />
+        เลขรุ่นคำนวณจากชั้นเรียนให้เอง — ม.6 คือรุ่น {generationOf(6)} · ม.5 รุ่น {generationOf(5)} · ม.4 รุ่น {generationOf(4)}
       </p>
 
       {/* ── ทีละคน ── */}
@@ -108,6 +118,25 @@ export function StudentNamesPanel({ students }: { students: StudentRow[] }) {
           <input id="sn-nick" name="nickname" required maxLength={30} className="field"
                  value={form.nickname} onChange={set('nickname')} placeholder="เช่น เอก" />
         </div>
+        <div>
+          <label htmlFor="sn-cowhand" className="label">ฉายา</label>
+          <select id="sn-cowhand" name="cowhand" className="field"
+                  value={form.cowhand} onChange={set('cowhand')}>
+            <option value="">— ไม่เปลี่ยน —</option>
+            <option value="cowboy">{COWHAND_LABEL.cowboy}</option>
+            <option value="cowgirl">{COWHAND_LABEL.cowgirl}</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="sn-grade" className="label">ชั้น</label>
+          <select id="sn-grade" name="grade" className="field"
+                  value={form.grade} onChange={set('grade')}>
+            <option value="">— ไม่เปลี่ยน —</option>
+            {GRADES.map(g => (
+              <option key={g} value={g}>ม.{g} · รุ่น {generationOf(g)}</option>
+            ))}
+          </select>
+        </div>
         <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <button type="submit" className="btn-brass" disabled={onePending}>
             {onePending ? 'กำลังบันทึก…' : 'บันทึกชื่อ'}
@@ -121,7 +150,9 @@ export function StudentNamesPanel({ students }: { students: StudentRow[] }) {
         <summary style={{ cursor: 'pointer', fontSize: '0.9rem', color: 'var(--brass-lit)' }}>วางหลายคนจากสเปรดชีต</summary>
         <form action={bulkAction} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
           <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.7 }}>
-            หนึ่งบรรทัดต่อหนึ่งคน เรียงคอลัมน์ <span style={{ fontFamily: 'var(--tech)' }}>อีเมลน้อง | ชื่อ-นามสกุล | ชื่อเล่น</span><br />
+            หนึ่งบรรทัดต่อหนึ่งคน เรียงคอลัมน์{' '}
+            <span style={{ fontFamily: 'var(--tech)' }}>อีเมลน้อง | ชื่อ-นามสกุล | ชื่อเล่น | คาวบอย/คาวเกิร์ล | ชั้น</span><br />
+            สองช่องท้ายเว้นว่างได้ = ฉายาเดิมไม่ถูกแตะ · ชั้นใส่ &quot;5&quot; หรือ &quot;ม.5&quot; ก็ได้<br />
             คัดลอกจาก Google Sheets มาวางได้เลย · มีแถวผิดแม้แถวเดียว = ไม่บันทึกทั้งก้อน
           </p>
           <textarea name="bulk" rows={6} required className="field"
@@ -161,15 +192,16 @@ export function StudentNamesPanel({ students }: { students: StudentRow[] }) {
       <div style={{ overflowX: 'auto' }}>
         <table className="match-table">
           <thead>
-            <tr><th>เมือง · #</th><th>อีเมล</th><th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th><span className="sr-only">จัดการ</span></th></tr>
+            <tr><th>เมือง · #</th><th>อีเมล</th><th>ชื่อ-นามสกุล</th><th>ชื่อเล่น</th><th>ฉายา</th><th><span className="sr-only">จัดการ</span></th></tr>
           </thead>
           <tbody>
             {students.length === 0 && (
-              <tr><td colSpan={5} style={{ color: 'var(--muted)' }}>ยังไม่มีน้องค่ายในระบบ</td></tr>
+              <tr><td colSpan={6} style={{ color: 'var(--muted)' }}>ยังไม่มีน้องค่ายในระบบ</td></tr>
             )}
             {students.map(s => {
               const nameOk = THAI_FULL_NAME.test(s.display_name)
               const nickOk = THAI_NICKNAME.test(s.nickname)
+              const titleOk = isCowhand(s.cowhand) && !!generationOf(s.grade)
               return (
                 <tr key={s.email}>
                   <td style={{ fontFamily: 'var(--tech)' }}>
@@ -182,9 +214,12 @@ export function StudentNamesPanel({ students }: { students: StudentRow[] }) {
                   <td style={{ color: nickOk ? undefined : 'var(--ember)' }}>
                     {s.nickname || '—'}{!nickOk && <span className="needs-fix">ต้องแก้</span>}
                   </td>
+                  <td style={{ color: titleOk ? 'var(--brass-lit)' : 'var(--ember)', whiteSpace: 'nowrap' }}>
+                    {titleOk ? cowhandTitle(s.cowhand, s.grade) : <>ยังไม่ตั้ง<span className="needs-fix">ต้องแก้</span></>}
+                  </td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button type="button" className="icon-btn" style={{ width: 36, height: 36 }}
-                            aria-label={`แก้ชื่อของ ${s.email}`} onClick={() => edit(s)}>
+                            aria-label={`แก้ชื่อและฉายาของ ${s.email}`} onClick={() => edit(s)}>
                       <Pencil size={14} />
                     </button>
                     <button type="button" className="icon-btn" style={{ width: 36, height: 36, marginLeft: 6 }}

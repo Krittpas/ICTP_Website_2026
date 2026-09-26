@@ -54,7 +54,7 @@ export function CampControls({ open, opensAt, studentCount }: {
             ? { tone: 'danger', title: 'ปิดระบบค่าย?', confirmLabel: 'ปิดระบบ',
                 message: 'น้องทุกคนจะตอบปริศนาไม่ได้จนกว่าจะเปิดใหม่ ความคืบหน้าที่ทำไปแล้วยังอยู่ครบ' }
             : { title: 'เปิดระบบค่ายเดี๋ยวนี้?', confirmLabel: 'เปิดระบบ',
-                message: 'คาวบอย #1 ของทุกเมืองจะเห็นปริศนาและเริ่มตอบได้ทันที' })
+                message: 'หมายเลขประจำตัว #1 ของทุกเมืองจะเห็นปริศนาและเริ่มตอบได้ทันที' })
           if (ok) run(
             () => setCampOpenAction(!open, when ? new Date(when).toISOString() : null, open ? 'ปิดระบบ' : 'เปิดระบบ'),
             open ? 'ปิดระบบแล้ว' : 'เปิดระบบแล้ว',
